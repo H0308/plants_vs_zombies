@@ -103,6 +103,47 @@ bool ifExists(char* plants_name)
 	return fp != NULL; // 不为空返回true，代表文件存在
 }
 
+// 加载背景音乐
+Mix_Music* GameBackgroundMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Music* music = Mix_LoadMUS("res/music/grass.mp3");
+	if (!music) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	if (Mix_PlayMusic(music, -1) < 0) {
+		printf("Unable to play music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	return music;
+}
+
+// 音乐资源释放
+void GameBackgroundMusicDestroy(Mix_Music** music)
+{
+	// 清理资源
+	Mix_FreeMusic(*music);
+	*music = nullptr;
+	Mix_CloseAudio();
+	SDL_Quit();
+}
+
 // 初始游戏场景
 void GameInit()
 {
@@ -208,6 +249,9 @@ void MouseAction()
 		}
 		else if (msg.message == WM_LBUTTONUP)// 鼠标左键弹起
 		{
+			int x = msg.x;
+			int y = msg.y;
+
 
 		}
 	}
