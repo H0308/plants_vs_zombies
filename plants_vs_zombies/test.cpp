@@ -7,7 +7,7 @@ int main()
 {
 	// 初始化游戏场景
 	GameInit();
-	Mix_Music* music = GameBackgroundMusic();
+	Mix_Chunk* music = GameBackgroundMusic();
 	// 持续显示图片并读取用户的操作
 	while (1)
 	{
@@ -20,8 +20,6 @@ int main()
 
 	// 防止窗口瞬间关闭
 	system("pause");
-	
-	// 释放音乐资源
-	GameBackgroundMusicDestroy(&music);
+
 	return 0;
 }

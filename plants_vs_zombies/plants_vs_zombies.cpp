@@ -104,7 +104,7 @@ bool ifExists(char* plants_name)
 }
 
 // 加载背景音乐
-Mix_Music* GameBackgroundMusic()
+Mix_Chunk* GameBackgroundMusic()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -119,30 +119,58 @@ Mix_Music* GameBackgroundMusic()
 	}
 
 	// 加载音乐文件
-	Mix_Music* music = Mix_LoadMUS("res/music/grass.mp3");
-	if (!music) {
+	Mix_Chunk * sound = Mix_LoadWAV("res/music/grass.wav");
+	if (!sound) {
 		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return nullptr;
 	}
 
 	// 开始播放音乐
-	if (Mix_PlayMusic(music, -1) < 0) {
-		printf("Unable to play music, SDL_mixer Error: %s\n", Mix_GetError());
+	Mix_PlayChannel(-1, sound, -1);
+
+	return sound;
+}
+
+// 植物种植音乐
+Mix_Chunk* PlantsCultivate()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
 		return nullptr;
 	}
 
-	return music;
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/plant.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+	// 将音量设置为50%
+	Mix_VolumeChunk(sound, 50); 
+
+	return sound;
 }
 
-// 音乐资源释放
-void GameBackgroundMusicDestroy(Mix_Music** music)
-{
-	// 清理资源
-	Mix_FreeMusic(*music);
-	*music = nullptr;
-	Mix_CloseAudio();
-	SDL_Quit();
-}
+// 音乐资源释放——暂时不处理
+
+//void GameBackgroundMusicDestroy(Mix_Chunk** sound)
+//{
+//	// 清理资源
+//	Mix_FreeChunk(*sound);
+//	*sound = nullptr;
+//	Mix_CloseAudio();
+//	SDL_Quit();
+//}
 
 // 初始游戏场景
 void GameInit()
@@ -157,6 +185,9 @@ void GameInit()
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
+	// 设置植物地图中的值为-1
+	memset(map, -1, sizeof(map));
+
 	// 起始不存在植物
 	curPlant = -1;
 	// 加载植物卡片到变量
@@ -218,6 +249,22 @@ void ImageRender()
 			curY - dragged->getheight() / 2, dragged);
 	}
 
+	// 渲染种植图
+	for (int i = 0; i < mapRow; i++)
+	{
+		for (int j = 0; j < mapCol; j++)
+		{
+			// 有植物时渲染
+			if (map[i][j].type > -1)
+			{
+				// 计算出x和y坐标作为渲染位置
+				int x = 257 + j * 81;
+				int y = 179 + i * 102;
+				putimageForPNG(x, y, imgPlantsMove[map[i][j].type][map[i][j].frameIndex]);
+			}
+		}
+	}
+
 	// 结束缓冲
 	EndBatchDraw();
 }
@@ -240,6 +287,10 @@ void MouseAction()
 				//std::cout << index << std::endl;
 				status_leftClick = 1;// 左键单击后置为1
 				curPlant = index;// 更新选中的植物
+
+				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
+				curX = msg.x;
+				curY = msg.y;
 			}
 		}
 		else if (msg.message == WM_MOUSEMOVE && status_leftClick) // 鼠标拖拽
@@ -247,12 +298,29 @@ void MouseAction()
 			curX = msg.x;
 			curY = msg.y;
 		}
-		else if (msg.message == WM_LBUTTONUP)// 鼠标左键弹起
+		else if (msg.message == WM_LBUTTONUP && curPlant > -1)// 鼠标左键弹起，并且判定有植物时才进入，否则不触发对应音效
 		{
-			int x = msg.x;
-			int y = msg.y;
+			if (msg.x >= 257 && msg.x <= 985 && msg.y >= 179 && msg.y <= 465)
+			{
+				// 通过x和y计算行和列
+				int row = (msg.y - 179) / 102;
+				int col = (msg.x - 257) / 81;
+				//std::cout << col << ", " << row << std::endl;
 
+				// 设置指定位置的植物类型和动作帧
+				if (map[row][col].type == -1)
+				{
+					map[row][col].type = curPlant;
+					map[row][col].frameIndex = 0;
+					Mix_Chunk* music = PlantsCultivate();
+				}
+				//GameBackgroundMusicDestroy(&music);
 
+				// 设置鼠标状态为0
+				status_leftClick = 0;
+				// 将当前植物设置为-1
+				curPlant = -1;
+			}
 		}
 	}
 }
