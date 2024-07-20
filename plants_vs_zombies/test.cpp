@@ -5,18 +5,15 @@
 #undef main
 int main()
 {
-	// 初始化游戏场景
-	GameInit();
-	Mix_Chunk* music = GameBackgroundMusic();
-	// 持续显示图片并读取用户的操作
-	while (1)
-	{
-		// 处理鼠标操作
-		MouseAction();
+	// 启动窗口大小设置
+	initgraph(WIDTH, HEIGHT, 1);
 
-		// 渲染图片
-		ImageRender();
-	}
+	GameStartMenu();
+	// 初始化游戏场景
+	GamingInit();
+	// 启动界面
+	// 开始游戏
+	Gaming();
 
 	// 防止窗口瞬间关闭
 	system("pause");

@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "plants_vs_zombies.h"
+
 // 载入PNG图并去透明部分
 void _putimagePNG(int  picture_x, int picture_y, IMAGE* picture) //x为载入图片的X坐标，y为Y坐标
 {
@@ -79,15 +80,18 @@ void putimageForPNG(int x, int y, IMAGE* picture) {
 }
 
 int getDelay() {
-	static unsigned long long lastTime = 0;
+	static unsigned long long firstTime = 0;
 	unsigned long long currentTime = GetTickCount();
-	if (lastTime == 0) {
-		lastTime = currentTime;
+	if (firstTime == 0) {
+		// 更新启动时间为当前时间
+		firstTime = currentTime;
 		return 0;
 	}
 	else {
-		int ret = currentTime - lastTime;
-		lastTime = currentTime;
+		// 获取到当前时间与上一次时间的差值
+		int ret = currentTime - firstTime;
+		// 更新启动时间为当前时间
+		firstTime = currentTime;
 		return ret;
 	}
 }
@@ -103,8 +107,63 @@ bool ifExists(char* plants_name)
 	return fp != NULL; // 不为空返回true，代表文件存在
 }
 
-// 加载背景音乐
-Mix_Chunk* GameBackgroundMusic()
+// 加载启动界面背景音乐
+Mix_Chunk* StartBackgroundMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* background = Mix_LoadWAV("res/music/start.wav");
+	if (!background) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, background, -1);
+	return background;
+}
+
+// 加载菜单音乐
+Mix_Chunk* ClickMenuMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* menu = Mix_LoadWAV("res/music/clickMenu.wav");
+	if (!menu) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, menu, 0);
+
+	return menu;
+}
+
+// 加载游戏过程背景音乐
+Mix_Chunk* GamingBackgroundMusic()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -127,6 +186,35 @@ Mix_Chunk* GameBackgroundMusic()
 
 	// 开始播放音乐
 	Mix_PlayChannel(-1, sound, -1);
+
+	return sound;
+}
+
+Mix_Chunk* ChoosePlantMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/choose.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+	// 将音量设置为50%
+	Mix_VolumeChunk(sound, 50);
 
 	return sound;
 }
@@ -172,16 +260,38 @@ Mix_Chunk* PlantsCultivate()
 //	SDL_Quit();
 //}
 
+// 初始化菜单场景
+void StartInit()
+{
+	// 加载开始界面背景
+	loadimage(&imgstart, "res/MainMenu.png");
+	// 默认未点击状态
+	status_leftClick = 0;
+
+	// 加载选项
+	loadimage(&imgMenu, "res/menu1.png");
+	loadimage(&imgMenuClicked, "res/menu2.png");
+}
+
+void ImageRenderStart()
+{
+	// 渲染开始菜单
+	putimageForPNG(0, 0, &imgstart);
+	// 渲染默认菜单和选中菜单
+	putimageForPNG(474, 75, status_leftClick ? &imgMenuClicked : &imgMenu);
+}
+
 // 初始游戏场景
-void GameInit()
+void GamingInit()
 {
 	// 加载游戏背景图片到变量
 	loadimage(&imgBackground, "res/bg.jpg");
-	// 启动窗口大小设置
-	initgraph(WIDTH, HEIGHT, 1);
 
 	// 加载植物栏图片到变量
 	loadimage(&imgPlantsBar, "res/bar5.png");
+
+	// 初始化鼠标左键动作
+	status_leftClick = 0;
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
@@ -218,10 +328,16 @@ void GameInit()
 			}
 		}
 	}
+
+	// 读取小推车照片
+	for (int i = 0; i < carNum; i++)
+	{
+		loadimage(&imgCar[i], "res/Screen/car.png");
+	}
 }
 
 // 图片渲染
-void ImageRender()
+void ImageRenderGaming()
 {
 	// 开始缓冲
 	BeginBatchDraw();
@@ -241,14 +357,6 @@ void ImageRender()
 		putimage(x, y, &imgPlants[i]);
 	}
 
-	// 渲染拖拽图
-	if (curPlant >= 0)
-	{
-		IMAGE* dragged = imgPlantsMove[curPlant][0];// 取到动作帧照片的第一张
-		putimageForPNG(curX - dragged->getwidth() / 2, 
-			curY - dragged->getheight() / 2, dragged);
-	}
-
 	// 渲染种植图
 	for (int i = 0; i < mapRow; i++)
 	{
@@ -265,33 +373,47 @@ void ImageRender()
 		}
 	}
 
+	// 渲染拖拽图，本步骤在种植步骤后实现拖拽图置于已经种植的植物图上方
+	if (curPlant >= 0)
+	{
+		IMAGE* dragged = imgPlantsMove[curPlant][0];// 取到动作帧照片的第一张
+		putimageForPNG(curX - dragged->getwidth() / 2,
+			curY - dragged->getheight() / 2, dragged);
+	}
+
+	// 渲染小推车
+	x = 195;
+	y = 0;
+	for (int i = 0; i < carNum; i++)
+	{
+		y = 210 + i * 100;
+		putimageForPNG(x, y, &imgCar[i]);
+	}
+
 	// 结束缓冲
 	EndBatchDraw();
 }
 
-void MouseAction()
+void MouseActionGaming()
 {
 	// 接收鼠标消息
 	ExMessage msg;
-	// 变量记录是否按下左键
-	static int status_leftClick = 0;
 	// 如果鼠标有动作，则开始处理，否则不处理
 	if(peekmessage(&msg))
 	{
 		// 鼠标左键单击
-		if (msg.message == WM_LBUTTONDOWN)
+		if (msg.message == WM_LBUTTONDOWN && msg.x >= 340 && msg.x <= 340 + PlantsCount * 65 && msg.y <= 96)
 		{
-			if (msg.x >= 340 && msg.x <= 340 + PlantsCount * 65 && msg.y <= 96)
-			{
-				int index = (msg.x - 340) / 66;// 使用66处理比较边缘的位置
-				//std::cout << index << std::endl;
-				status_leftClick = 1;// 左键单击后置为1
-				curPlant = index;// 更新选中的植物
+			int index = (msg.x - 340) / 66;// 使用66处理比较边缘的位置
+			//std::cout << index << std::endl;
+			status_leftClick = 1;// 左键单击后置为1
+			curPlant = index;// 更新选中的植物
 
-				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
-				curX = msg.x;
-				curY = msg.y;
-			}
+			// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
+			curX = msg.x;
+			curY = msg.y;
+
+			ChoosePlantMusic();
 		}
 		else if (msg.message == WM_MOUSEMOVE && status_leftClick) // 鼠标拖拽
 		{
@@ -323,4 +445,91 @@ void MouseAction()
 			}
 		}
 	}
+}
+
+// 更新植物运动
+void updatePlantsMove()
+{
+	for (int i = 0; i < mapRow; i++)
+	{
+		for (int j = 0; j < mapCol; j++)
+		{
+			if (map[i][j].type > -1)
+			{
+				// 更新植物运动
+				map[i][j].frameIndex++;
+				if (imgPlantsMove[map[i][j].type][map[i][j].frameIndex] == NULL)
+				{
+					map[i][j].frameIndex = 0;
+				}
+			}
+		}
+	}
+}
+
+void GameStartMenu()
+{
+	// 加载开始背景
+	StartInit();
+
+	// 加载开始背景音乐
+	StartBackgroundMusic();
+
+	while (1)
+	{
+		// 处理鼠标操作
+		ExMessage msg;
+		BeginBatchDraw();
+		// 渲染图片
+		ImageRenderStart();
+		EndBatchDraw();
+		if (peekmessage(&msg))
+		{
+			if (msg.message == WM_LBUTTONDOWN)
+			{
+				if (msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+				{
+					status_leftClick = 1;
+					ClickMenuMusic();
+				}
+			}
+			else if (msg.message == WM_LBUTTONUP && status_leftClick)
+			{
+				status_leftClick = 0;
+				break;
+			}
+		}
+	}
+	// 关闭两个音乐
+	Mix_CloseAudio();
+	Mix_CloseAudio();
+
+	return;
+}
+
+void Gaming()
+{
+	// 加载游戏背景音乐
+	Mix_Chunk* music = GamingBackgroundMusic();
+	int time = 0;
+	// 持续显示图片并读取用户的操作
+	while (1)
+	{
+		// 处理鼠标操作
+		MouseActionGaming();
+
+		// 渲染图片
+		ImageRenderGaming();
+
+		// 更新动作帧照片
+		time += getDelay();
+		if (time > 100)
+		{
+			updatePlantsMove();
+			time = 0;
+		}
+	}
+
+	Mix_CloseAudio();
+	Mix_CloseAudio();
 }
