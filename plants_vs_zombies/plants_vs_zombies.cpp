@@ -297,6 +297,8 @@ void GamingInit()
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
 	// 设置植物地图中的值为-1
 	memset(map, -1, sizeof(map));
+	// 初始化阳光数组中的所有值为0
+	memset(sunshine_sky, 0, sizeof(sunshine_sky));
 
 	// 起始不存在植物
 	curPlant = -1;
@@ -330,9 +332,17 @@ void GamingInit()
 	}
 
 	// 读取小推车照片
-	for (int i = 0; i < carNum; i++)
+	for (int i = 0; i < CARNUM; i++)
 	{
 		loadimage(&imgCar[i], "res/Screen/car.png");
+	}
+
+	// 读取阳光找到到阳光图片帧数组
+	char sun_name[64] = { 0 };
+	for (int i = 0; i < 29; i++)
+	{
+		sprintf(sun_name, "res/sunshine/%d.png", i + 1);
+		loadimage(&imgSunFrameIndex[i], sun_name);
 	}
 }
 
@@ -358,9 +368,9 @@ void ImageRenderGaming()
 	}
 
 	// 渲染种植图
-	for (int i = 0; i < mapRow; i++)
+	for (int i = 0; i < MAPROW; i++)
 	{
-		for (int j = 0; j < mapCol; j++)
+		for (int j = 0; j < MAPCOL; j++)
 		{
 			// 有植物时渲染
 			if (map[i][j].type > -1)
@@ -384,10 +394,20 @@ void ImageRenderGaming()
 	// 渲染小推车
 	x = 195;
 	y = 0;
-	for (int i = 0; i < carNum; i++)
+	for (int i = 0; i < CARNUM; i++)
 	{
 		y = 210 + i * 100;
 		putimageForPNG(x, y, &imgCar[i]);
+	}
+
+	// 渲染阳光
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		if (sunshine_sky[i].isUse)
+		{
+			putimageForPNG(sunshine_sky[i].x, sunshine_sky[i].y, 
+				&imgSunFrameIndex[sunshine_sky[i].frameIndex]);
+		}
 	}
 
 	// 结束缓冲
@@ -450,9 +470,9 @@ void MouseActionGaming()
 // 更新植物运动
 void updatePlantsMove()
 {
-	for (int i = 0; i < mapRow; i++)
+	for (int i = 0; i < MAPROW; i++)
 	{
-		for (int j = 0; j < mapCol; j++)
+		for (int j = 0; j < MAPCOL; j++)
 		{
 			if (map[i][j].type > -1)
 			{
@@ -461,6 +481,62 @@ void updatePlantsMove()
 				if (imgPlantsMove[map[i][j].type][map[i][j].frameIndex] == NULL)
 				{
 					map[i][j].frameIndex = 0;
+				}
+			}
+		}
+	}
+}
+
+// 创建阳光
+void CreateSunshine()
+{
+	static int count = 0;// 控制次数
+	static int frequent = 80;// 控制阳光产生的频率
+	count++;// 记录调用次数
+	if (count >= frequent)
+	{
+		// 通过随机数控制阳光产生的频率
+		frequent = 100 + rand() % 200; // [0, 299]
+		count = 0;// 重新计数
+		// 先找到可用的阳光的下标
+		int i = 0;
+		while (i < SUNSHINENUM && sunshine_sky[i].isUse)
+		{
+			i++;
+		}
+
+		// 更改新阳光的数据
+		sunshine_sky[i].x = 260 + rand() % (900 - 260); // [260, 899]
+		sunshine_sky[i].y = 60;
+		sunshine_sky[i].dest = 180 + (rand() % 4) * 102; // [180, 486]
+		sunshine_sky[i].frameIndex = 0; // 从第一张帧照片开始
+		// 将阳光使用状态改为1
+		sunshine_sky[i].isUse = 1;
+	}
+}
+
+// 更新阳光
+void updateSunshine()
+{
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		if (sunshine_sky[i].isUse)
+		{
+			// 更新阳光图片帧
+			sunshine_sky[i].frameIndex = (sunshine_sky[i].frameIndex + 1) % 29;
+			// 更新y坐标
+			if (sunshine_sky[i].timer == 0)
+			{
+				sunshine_sky[i].y += 5;
+			}
+			// 到达dest位置，阳光停留一段时间，再销毁阳光
+			if (sunshine_sky[i].y >= sunshine_sky[i].dest)
+			{
+				sunshine_sky[i].timer++;
+				if (sunshine_sky[i].timer >= 120)
+				{
+					sunshine_sky[i].timer = 0;
+					sunshine_sky[i].isUse = 0;
 				}
 			}
 		}
@@ -507,6 +583,16 @@ void GameStartMenu()
 	return;
 }
 
+void UpdateGameData()
+{
+	// 更新植物动作
+	updatePlantsMove();
+	// 创建阳光
+	CreateSunshine();
+	// 更新阳光
+	updateSunshine();
+}
+
 void Gaming()
 {
 	// 加载游戏背景音乐
@@ -525,7 +611,7 @@ void Gaming()
 		time += getDelay();
 		if (time > 100)
 		{
-			updatePlantsMove();
+			UpdateGameData();
 			time = 0;
 		}
 	}
