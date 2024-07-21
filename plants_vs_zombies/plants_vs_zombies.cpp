@@ -79,6 +79,7 @@ void putimageForPNG(int x, int y, IMAGE* picture) {
 	_putimagePNG(x, y, picture);
 }
 
+// 获取延迟时间
 int getDelay() {
 	static unsigned long long firstTime = 0;
 	unsigned long long currentTime = GetTickCount();
@@ -190,6 +191,7 @@ Mix_Chunk* GamingBackgroundMusic()
 	return sound;
 }
 
+// 选择植物背景音乐
 Mix_Chunk* ChoosePlantMusic()
 {
 	// 初始化SDL
@@ -249,6 +251,65 @@ Mix_Chunk* PlantsCultivate()
 	return sound;
 }
 
+// 阳光收集音乐
+Mix_Chunk* CollectSunshineMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/sunshine.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+	// 将音量设置为50%
+	Mix_VolumeChunk(sound, 50);
+
+	return sound;
+}
+
+Mix_Chunk* FailChoosePlantMusic()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return nullptr;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/failToChoose.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return nullptr;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+	// 将音量设置为50%
+	Mix_VolumeChunk(sound, 50);
+
+	return sound;
+}
+
 // 音乐资源释放——暂时不处理
 
 //void GameBackgroundMusicDestroy(Mix_Chunk** sound)
@@ -273,6 +334,7 @@ void StartInit()
 	loadimage(&imgMenuClicked, "res/menu2.png");
 }
 
+// 开始界面图片渲染
 void ImageRenderStart()
 {
 	// 渲染开始菜单
@@ -292,6 +354,10 @@ void GamingInit()
 
 	// 初始化鼠标左键动作
 	status_leftClick = 0;
+	// 起始不存在植物
+	curPlant = -1;
+	// 阳光初始值
+	sunshineScore = 50;
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
@@ -300,8 +366,6 @@ void GamingInit()
 	// 初始化阳光数组中的所有值为0
 	memset(sunshine_sky, 0, sizeof(sunshine_sky));
 
-	// 起始不存在植物
-	curPlant = -1;
 	// 加载植物卡片到变量
 	char plants_name[64] = { 0 }; // 通过局部变量记录植物卡牌文件名称
 	for (int i = 0; i < PlantsCount; i++)
@@ -344,6 +408,17 @@ void GamingInit()
 		sprintf(sun_name, "res/sunshine/%d.png", i + 1);
 		loadimage(&imgSunFrameIndex[i], sun_name);
 	}
+
+	// 设置字体
+	LOGFONT font;
+	gettextstyle(&font);
+	font.lfHeight = 30;
+	font.lfWeight = 50;
+	strcpy(font.lfFaceName, "Segoe UI BLACK");
+	font.lfQuality = ANTIALIASED_QUALITY; // 抗锯齿效果
+	settextstyle(&font);
+	setbkmode(TRANSPARENT); // 背景透明
+	settextcolor(BLACK); // 字体颜色为黑色
 }
 
 // 图片渲染
@@ -364,7 +439,7 @@ void ImageRenderGaming()
 	for (int i = 0; i < PlantsCount; i++)
 	{
 		x = 340 + i * 65;
-		putimage(x, y, &imgPlants[i]);
+		putimageForPNG(x, y, &imgPlants[i]);
 	}
 
 	// 渲染种植图
@@ -410,10 +485,15 @@ void ImageRenderGaming()
 		}
 	}
 
+	char scoreText[5];
+	sprintf(scoreText, "%d", sunshineScore);
+	outtextxy(285, 67, scoreText);
+
 	// 结束缓冲
 	EndBatchDraw();
 }
 
+// 处理游戏过程中的操作
 void MouseActionGaming()
 {
 	// 接收鼠标消息
@@ -422,18 +502,24 @@ void MouseActionGaming()
 	if(peekmessage(&msg))
 	{
 		// 鼠标左键单击
-		if (msg.message == WM_LBUTTONDOWN && msg.x >= 340 && msg.x <= 340 + PlantsCount * 65 && msg.y <= 96)
+		if (msg.message == WM_LBUTTONDOWN)
 		{
-			int index = (msg.x - 340) / 66;// 使用66处理比较边缘的位置
-			//std::cout << index << std::endl;
-			status_leftClick = 1;// 左键单击后置为1
-			curPlant = index;// 更新选中的植物
-
-			// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
-			curX = msg.x;
-			curY = msg.y;
-
-			ChoosePlantMusic();
+			if (msg.x >= 340 && msg.x <= 340 + PlantsCount * 65 && msg.y <= 96) // 选植物
+			{
+				int index = (msg.x - 340) / 66;// 使用66处理比较边缘的位置
+				//std::cout << index << std::endl;
+				status_leftClick = 1;// 左键单击后置为1
+				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
+				curX = msg.x;
+				curY = msg.y;
+				
+				// 如果当前拥有的阳光数量大于点击植物的需求量，则选中，否则无法选择
+				ChoosePlant(index);
+			}
+			else // 收集阳光
+			{
+				CollectSunshine(&msg);
+			}
 		}
 		else if (msg.message == WM_MOUSEMOVE && status_leftClick) // 鼠标拖拽
 		{
@@ -468,7 +554,7 @@ void MouseActionGaming()
 }
 
 // 更新植物运动
-void updatePlantsMove()
+void UpdatePlantsMove()
 {
 	for (int i = 0; i < MAPROW; i++)
 	{
@@ -496,7 +582,7 @@ void CreateSunshine()
 	if (count >= frequent)
 	{
 		// 通过随机数控制阳光产生的频率
-		frequent = 100 + rand() % 200; // [0, 299]
+		frequent = rand() % 100; // [0, 99]
 		count = 0;// 重新计数
 		// 先找到可用的阳光的下标
 		int i = 0;
@@ -516,7 +602,7 @@ void CreateSunshine()
 }
 
 // 更新阳光
-void updateSunshine()
+void UpdateSunshine()
 {
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
@@ -543,6 +629,74 @@ void updateSunshine()
 	}
 }
 
+// 收集阳光
+void CollectSunshine(ExMessage* msg)
+{
+	// 找到正在使用的阳光
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		if (sunshine_sky[i].isUse)
+		{
+			int width = imgSunFrameIndex[0].getwidth();// 获取到太阳的宽度
+			int height = imgSunFrameIndex[0].getheight(); // 获取太阳的高度
+			// 判断是否在阳光的可点击范围内
+			if (msg->x >= sunshine_sky[i].x && msg->x <= sunshine_sky[i].x + width &&
+				msg->y >= sunshine_sky[i].y && msg->y <= sunshine_sky[i].y + height)
+			{
+				// 收集阳光
+				sunshineScore += PERSUNSHINE;
+				// 更新阳光状态为0
+				sunshine_sky[i].isUse = 0;
+				// 播放收集阳光音乐
+				CollectSunshineMusic();
+			}
+		}
+	}
+}
+
+// 选择植物
+void ChoosePlant(int index)
+{
+	if (index == peaShooter.type)// 选择豌豆射手
+	{
+		if (sunshineScore >= peaShooter.sunshine)// 是否满足豌豆射手需要的阳光数量
+		{
+			// if防止同一个植物二次赋值
+			if (curPlant != index)
+			{
+				// 更新curPlant
+				curPlant = index;
+				// 更新阳光
+				sunshineScore -= peaShooter.sunshine;
+				// 播放选中的音乐
+				ChoosePlantMusic();
+			}
+		}
+		else
+		{	
+			// 播放音乐无法选择
+			FailChoosePlantMusic();
+		}
+	}
+	else if (index == sunflower.type)// 选择向日葵
+	{
+		if (sunshineScore >= sunflower.sunshine)
+		{
+			if (curPlant != index)
+			{
+				sunshineScore -= sunflower.sunshine;
+				curPlant = index;
+				ChoosePlantMusic();
+			}
+		}
+		else
+		{
+			FailChoosePlantMusic();
+		}
+	}
+}
+
+// 游戏开始界面菜单
 void GameStartMenu()
 {
 	// 加载开始背景
@@ -583,16 +737,18 @@ void GameStartMenu()
 	return;
 }
 
+// 更新游戏数据
 void UpdateGameData()
 {
 	// 更新植物动作
-	updatePlantsMove();
+	UpdatePlantsMove();
 	// 创建阳光
 	CreateSunshine();
 	// 更新阳光
-	updateSunshine();
+	UpdateSunshine();
 }
 
+// 游戏进行
 void Gaming()
 {
 	// 加载游戏背景音乐

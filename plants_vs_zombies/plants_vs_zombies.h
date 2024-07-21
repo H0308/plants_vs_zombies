@@ -10,6 +10,7 @@
 #define MAPCOL 9 // 地图列数
 #define CARNUM 3 // 小推车的个数
 #define SUNSHINENUM 10 // 产生阳光的个数
+#define PERSUNSHINE 25 // 一个阳光的增值
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -18,14 +19,32 @@ static IMAGE imgPlantsBar;// 植物栏
 static int status_leftClick; // 是否点击菜单
 
 // 植物卡牌
-enum 
+enum
 {
 	Pea_Shooter, // 豌豆射手
 	SunFlower, // 向日葵
 	PlantsCount // 植物计数
 };
 
-// 存储植物的数组
+// 豌豆射手属性
+struct PeaShooter
+{
+	int type = Pea_Shooter;// 豌豆射手类型
+	int sunshine = 100;// 每一个豌豆射手需要的阳光
+};
+// 豌豆射手对象
+static PeaShooter peaShooter;
+
+// 向日葵属性
+struct Sunflower
+{
+	int type = SunFlower; // 向日葵类型
+	int sunshine = 50;// 每一个向日葵需要的阳光
+};
+// 向日葵对象
+static Sunflower sunflower;
+
+// 存储植物卡图片的数组
 static IMAGE imgPlants[PlantsCount];
 static int curX, curY;// 存储当前鼠标的x坐标和y坐标
 // 存储植物运动图的数组
@@ -52,6 +71,7 @@ struct sunshineFromSky
 static sunshineFromSky sunshine_sky[SUNSHINENUM];
 // 阳光动作帧照片数组
 static IMAGE imgSunFrameIndex[29];
+static int sunshineScore; // 当前阳光数量
 
 static plant map[MAPROW][MAPCOL];// 植物地图
 
@@ -65,6 +85,8 @@ Mix_Chunk* GamingBackgroundMusic();
 Mix_Chunk* PlantsCultivate();
 Mix_Chunk* ClickMenuMusic();
 Mix_Chunk* ChoosePlantMusic();
+Mix_Chunk* CollectSunshineMusic();
+Mix_Chunk* FailChoosePlantMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
@@ -81,10 +103,15 @@ void MouseActionGaming();
 // 更新游戏相关数据
 void UpdateGameData();
 // 更新植物运动
-void updatePlantsMove();
+void UpdatePlantsMove();
 // 创建阳光
 void CreateSunshine();
 // 更新阳光
-void updateSunshine();
+void UpdateSunshine();
+// 收集阳光
+void CollectSunshine(ExMessage* msg);
+// 选择植物
+void ChoosePlant(int index);
+
 // 背景音乐资源清理
 //void GameBackgroundMusicDestroy(Mix_Chunk** sound);
