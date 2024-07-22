@@ -690,7 +690,7 @@ void CreateZombies()
 	count++;
 	if (count >= frequent)
 	{
-		frequent = 100 + log(rand () % 100); // [100, 299]
+		frequent = 100 + log(rand() % 100);
 		count = 0;
 		// 找到未使用的僵尸
 		int i = 0;
@@ -723,7 +723,7 @@ void UpdateZombies()
 {
 	static int count = 0;// count控制调用次数
 	count++;
-	if (count > 1) // 每三次调用僵尸更新一次
+	if (count >= 1) // 每三次调用僵尸更新一次
 	{
 		count = 0;
 		for (int i = 0; i < ZOMBIENUM; i++)
@@ -744,7 +744,7 @@ void UpdateZombies()
 					ZombiesGroanMusic();
 				}
 				// 僵尸到达草坪左边界
-				if (zombies[i].x <= 170)
+				if (zombies[i].x <= 150)
 				{
 					// 判断是否有小推车，有则移动小推车，没有则游戏结束
 					// 小推车暂未实现
