@@ -11,6 +11,7 @@
 #define CARNUM 3 // 小推车的个数
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
+#define ZOMBIENUM 10 // 僵尸的数量
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -67,11 +68,24 @@ struct sunshineFromSky
 	int timer; // 计时器记录阳光在掉落点停留时间
 };
 
+struct zombie
+{
+	int x, y; // 僵尸位置
+	int frameIndex; // 动作帧照片
+	int isUse; // 是否被使用
+	int speed; // 僵尸移动速度
+};
+
 // 存储阳光数组
 static sunshineFromSky sunshine_sky[SUNSHINENUM];
 // 阳光动作帧照片数组
 static IMAGE imgSunFrameIndex[29];
 static int sunshineScore; // 当前阳光数量
+
+// 存储僵尸的数组
+static zombie zombies[ZOMBIENUM];
+// 僵尸动作帧数组
+static IMAGE imgZombieFrameIndex[22];
 
 static plant map[MAPROW][MAPCOL];// 植物地图
 
@@ -79,14 +93,16 @@ static plant map[MAPROW][MAPCOL];// 植物地图
 void putimageForPNG(int  picture_x, int picture_y, IMAGE* picture);
 int getDelay();
 
-// 加载音乐音乐
-Mix_Chunk* StartBackgroundMusic();
-Mix_Chunk* GamingBackgroundMusic();
-Mix_Chunk* PlantsCultivate();
-Mix_Chunk* ClickMenuMusic();
-Mix_Chunk* ChoosePlantMusic();
-Mix_Chunk* CollectSunshineMusic();
-Mix_Chunk* FailChoosePlantMusic();
+// 加载音乐
+void StartBackgroundMusic();
+void GamingBackgroundMusic();
+void PlantsCultivate();
+void ClickMenuMusic();
+void ChoosePlantMusic();
+void CollectSunshineMusic();
+void FailChoosePlantMusic();
+void ZombiesComingMusic();
+void ZombiesGroanMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
@@ -112,6 +128,7 @@ void UpdateSunshine();
 void CollectSunshine(ExMessage* msg);
 // 选择植物
 void ChoosePlant(int index);
-
-// 背景音乐资源清理
-//void GameBackgroundMusicDestroy(Mix_Chunk** sound);
+// 创建僵尸
+void CreateZombies();
+// 僵尸移动
+void UpdateZombies();

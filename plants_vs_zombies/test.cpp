@@ -5,10 +5,22 @@
 #undef main
 int main()
 {
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return 1;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return 1;
+	}
+
 	// 设置随机数种子
 	srand((unsigned int)time(NULL));
 	// 启动窗口大小设置
-	initgraph(WIDTH, HEIGHT, 1);
+	initgraph(WIDTH, HEIGHT);	
 
 	GameStartMenu();
 	// 初始化游戏场景
