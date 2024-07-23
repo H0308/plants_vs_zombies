@@ -3,6 +3,7 @@
 #include <graphics.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
+#include <cmath>
 
 #define WIDTH 900 // 游戏窗口宽度
 #define HEIGHT 600 // 游戏窗口高度
@@ -12,6 +13,7 @@
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
 #define ZOMBIENUM 10 // 僵尸的数量
+#define SUNSHINESPEED 60 // 阳光飞行速度
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -61,11 +63,13 @@ struct plant
 
 struct sunshineFromSky
 {
-	int x, y;// 阳光下落的x坐标和y坐标
+	double x, y;// 阳光下落的x坐标和y坐标
 	int frameIndex; // 记录图片帧
 	int dest; // 阳光掉落的y坐标
 	int isUse; // 阳光是否被使用
 	int timer; // 计时器记录阳光在掉落点停留时间
+	double xoffset; // x坐标偏移量
+	double yoffset; // y坐标偏移量
 };
 
 struct zombie

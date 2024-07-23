@@ -462,7 +462,7 @@ void ImageRenderGaming()
 	// 渲染阳光
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
-		if (sunshine_sky[i].isUse)
+		if (sunshine_sky[i].isUse || sunshine_sky[i].xoffset || sunshine_sky[i].yoffset)
 		{
 			putimageForPNG(sunshine_sky[i].x, sunshine_sky[i].y,
 				&imgSunFrameIndex[sunshine_sky[i].frameIndex]);
@@ -522,7 +522,6 @@ void MouseActionGaming()
 					map[row][col].frameIndex = 0;
 					PlantsCultivate();
 				}
-				//GameBackgroundMusicDestroy(&music);
 
 				// 设置鼠标状态为0
 				status_leftClick = 0;
@@ -578,10 +577,16 @@ void CreateSunshine()
 			// 更改新阳光的数据
 			sunshine_sky[i].x = 260 + rand() % (900 - 260); // [260, 899]
 			sunshine_sky[i].y = 140;
-			sunshine_sky[i].dest = 200 + (rand() % 4) * 102; // [200, 486]
+			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 102; // [200, 486]
 			sunshine_sky[i].frameIndex = 0; // 从第一张帧照片开始
 			// 将阳光使用状态改为1
 			sunshine_sky[i].isUse = 1;
+
+			// 计算角度
+			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
+			// 根据角度计算偏移量
+			sunshine_sky[i].yoffset = SUNSHINESPEED * sin(angle);
+			sunshine_sky[i].xoffset = SUNSHINESPEED * cos(angle);
 		}
 	}
 }
@@ -611,6 +616,25 @@ void UpdateSunshine()
 				}
 			}
 		}
+		else if (sunshine_sky[i].xoffset || sunshine_sky[i].yoffset)
+		{
+			// 计算角度
+			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
+			// 根据角度计算偏移量
+			sunshine_sky[i].yoffset = SUNSHINESPEED * sin(angle);
+			sunshine_sky[i].xoffset = SUNSHINESPEED * cos(angle);
+			// 更新阳光坐标
+			sunshine_sky[i].x -= sunshine_sky[i].xoffset;
+			sunshine_sky[i].y -= sunshine_sky[i].yoffset;
+			// 判断结束飞行
+			if (sunshine_sky[i].x < 262 || sunshine_sky[i].y < 0)
+			{
+				sunshineScore += PERSUNSHINE;
+				// 偏移量更新为0
+				sunshine_sky[i].xoffset = 0;
+				sunshine_sky[i].yoffset = 0;
+			}
+		}
 	}
 }
 
@@ -629,7 +653,6 @@ void CollectSunshine(ExMessage* msg)
 				msg->y >= sunshine_sky[i].y && msg->y <= sunshine_sky[i].y + height)
 			{
 				// 收集阳光
-				sunshineScore += PERSUNSHINE;
 				// 更新阳光状态为0
 				sunshine_sky[i].isUse = 0;
 				// 播放收集阳光音乐

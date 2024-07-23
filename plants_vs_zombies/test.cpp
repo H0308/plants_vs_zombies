@@ -20,7 +20,7 @@ int main()
 	// 设置随机数种子
 	srand((unsigned int)time(NULL));
 	// 启动窗口大小设置
-	initgraph(WIDTH, HEIGHT);	
+	initgraph(WIDTH, HEIGHT, EX_SHOWCONSOLE);
 
 	GameStartMenu();
 	// 初始化游戏场景
