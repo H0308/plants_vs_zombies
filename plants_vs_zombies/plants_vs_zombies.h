@@ -14,6 +14,8 @@
 #define PERSUNSHINE 25 // 一个阳光的增值
 #define ZOMBIENUM 10 // 僵尸的数量
 #define SUNSHINESPEED 60 // 阳光飞行速度
+#define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
+#define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -59,6 +61,7 @@ struct plant
 {
 	int type; // 记录当前种植的植物，-1默认没有植物
 	int frameIndex; // 记录动作帧
+	int x, y; // 植物所在坐标
 };
 
 struct sunshineFromSky
@@ -80,11 +83,20 @@ struct zombie
 	int speed; // 僵尸移动速度
 };
 
+struct bullet
+{
+	int x, y; // 豌豆子弹位置
+	int isUse; // 豌豆子弹是否被使用
+	int speed; // 豌豆子弹的速度
+};
+
 // 存储阳光数组
 static sunshineFromSky sunshine_sky[SUNSHINENUM];
 // 阳光动作帧照片数组
 static IMAGE imgSunFrameIndex[29];
 static int sunshineScore; // 当前阳光数量
+static bullet peaShooterBullets[PEASHOOTERBULLETNUM]; // 豌豆子弹的数量
+static IMAGE imgPeaShooterBullets;// 豌豆子弹图片
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
@@ -136,3 +148,8 @@ void ChoosePlant(int index);
 void CreateZombies();
 // 僵尸移动
 void UpdateZombies();
+// 创建豌豆射手子弹
+void CreatePeaShooterBullets();
+// 更新豌豆射手子弹
+void UpdatePeaShooterBullets();
+

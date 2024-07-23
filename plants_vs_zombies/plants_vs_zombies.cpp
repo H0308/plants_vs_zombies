@@ -324,6 +324,8 @@ void GamingInit()
 	memset(sunshine_sky, 0, sizeof(sunshine_sky));
 	// 初始化僵尸数组中的所有值为0
 	memset(zombies, 0, sizeof(zombies));
+	// 设置豌豆子弹数组的所有值为0
+	memset(peaShooterBullets, 0, sizeof(peaShooterBullets));
 
 	// 加载植物卡片到变量
 	char plants_name[64] = { 0 }; // 通过局部变量记录植物卡牌文件名称
@@ -375,6 +377,9 @@ void GamingInit()
 		sprintf(zombie_name, "res/zm/%d.png", i + 1);
 		loadimage(&imgZombieFrameIndex[i], zombie_name);
 	}
+
+	// 加载豌豆子弹图片
+	loadimage(&imgPeaShooterBullets, "res/bullets/PeaNormal/PeaNormal_0.png");
 
 	// 设置字体
 	LOGFONT font;
@@ -434,6 +439,15 @@ void ImageRenderGaming()
 			// 从僵尸脚的位置渲染
 			putimageForPNG(zombies[i].x, zombies[i].y - img.getheight(), 
 				&imgZombieFrameIndex[zombies[i].frameIndex]);
+		}
+	}
+
+	// 渲染豌豆子弹
+	for (int i = 0; i < PEASHOOTERBULLETNUM; i++)
+	{
+		if (peaShooterBullets[i].isUse)
+		{
+			putimageForPNG(peaShooterBullets[i].x, peaShooterBullets[i].y, &imgPeaShooterBullets);
 		}
 	}
 
@@ -520,6 +534,8 @@ void MouseActionGaming()
 				{
 					map[row][col].type = curPlant;
 					map[row][col].frameIndex = 0;
+					map[row][col].x = col;
+					map[row][col].y = row;
 					PlantsCultivate();
 				}
 
@@ -778,6 +794,77 @@ void UpdateZombies()
 	}
 }
 
+// 创建豌豆子弹
+void CreatePeaShooterBullets()
+{
+	// 先找到有僵尸的行位置
+	int y = 0;
+	for (int i = 0; i < ZOMBIENUM; i++)
+	{
+		if (zombies[i].isUse)
+		{
+			y = zombies[i].y + imgZombieFrameIndex[0].getheight();
+		}
+	}
+
+	// 计算僵尸所在行数
+	int zombieRow = y % 102;
+
+	// 找到有豌豆射手的位置，创建豌豆子弹
+	for (int i = 0; i < MAPROW; i++)
+	{
+		for (int j = 0; j < MAPCOL; j++)
+		{
+			// 找到豌豆射手的位置并且确定豌豆射手的位置与僵尸的位置在同一行
+			if (map[i][j].type == peaShooter.type)
+			{
+
+				int plantRow = map[i][j].y % 102;
+				printf("%d %d\n", plantRow, zombieRow);
+
+				if (zombieRow == plantRow)
+				{
+					// 僵尸越过警戒线就开始攻击
+					if (zombies[i].x <= PEASHOOTERSAFETYLINE)
+					{
+						for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
+						{
+							if (peaShooterBullets[k].isUse == 0)
+							{
+								// 创建当前行的豌豆子弹
+								peaShooterBullets[k].x = map[i][j].x + imgPlantsMove[Pea_Shooter][0]->getwidth();
+								peaShooterBullets[k].y = map[i][j].y + imgPlantsMove[Pea_Shooter][0]->getheight() / 4;
+
+								// 初始化子弹其余变量
+								peaShooterBullets[k].isUse = 1;
+								peaShooterBullets[k].speed = 5;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// 更新子弹
+void UpdatePeaShooterBullets()
+{
+	// 找到正在使用的子弹
+	for (int i = 0; i < PEASHOOTERBULLETNUM; i++)
+	{
+		if (peaShooterBullets[i].isUse)
+		{
+			peaShooterBullets[i].x += peaShooterBullets[i].speed;
+			// 如果子弹越过警戒线则销毁，后期更改为击中销毁
+			if (peaShooterBullets[i].x >= PEASHOOTERSAFETYLINE)
+			{
+				peaShooterBullets[i].isUse = 0;
+			}
+		}
+	}
+}
+
 // 游戏开始界面菜单
 void GameStartMenu()
 {
@@ -845,6 +932,10 @@ void UpdateGameData()
 	CreateZombies();
 	// 僵尸移动
 	UpdateZombies();
+	// 创建豌豆子弹
+	CreatePeaShooterBullets();
+	// 更新豌豆子弹
+	UpdatePeaShooterBullets();
 }
 
 // 游戏进行
