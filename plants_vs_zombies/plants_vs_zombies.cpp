@@ -690,7 +690,7 @@ void CreateZombies()
 	count++;
 	if (count >= frequent)
 	{
-		frequent = 100 + log(rand() % 100);
+		frequent = 300 - log(count);
 		count = 0;
 		// 找到未使用的僵尸
 		int i = 0;
