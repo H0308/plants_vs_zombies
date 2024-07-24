@@ -13,9 +13,10 @@
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
 #define ZOMBIENUM 10 // 僵尸的数量
-#define SUNSHINESPEED 60 // 阳光飞行速度
+#define SUNSHINESPEED 80 // 阳光飞行速度
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
 #define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
+#define PEASHOOTERBULLETDAMAGE 20 // 豌豆子弹的伤害
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -69,6 +70,7 @@ struct sunshineFromSky
 	double x, y;// 阳光下落的x坐标和y坐标
 	int frameIndex; // 记录图片帧
 	int dest; // 阳光掉落的y坐标
+	int isClick; // 阳光是否被点击
 	int isUse; // 阳光是否被使用
 	int timer; // 计时器记录阳光在掉落点停留时间
 	double xoffset; // x坐标偏移量
@@ -81,6 +83,9 @@ struct zombie
 	int frameIndex; // 动作帧照片
 	int isUse; // 是否被使用
 	int speed; // 僵尸移动速度
+	int blood; // 僵尸血量
+	int row; // 僵尸出现的行
+	int isDead; // 僵尸是否死亡
 };
 
 struct bullet
@@ -88,6 +93,8 @@ struct bullet
 	int x, y; // 豌豆子弹位置
 	int isUse; // 豌豆子弹是否被使用
 	int speed; // 豌豆子弹的速度
+	int isExplode; // 豌豆子弹是否爆炸
+	int row; // 子弹出现的行
 };
 
 // 存储阳光数组
@@ -96,7 +103,9 @@ static sunshineFromSky sunshine_sky[SUNSHINENUM];
 static IMAGE imgSunFrameIndex[29];
 static int sunshineScore; // 当前阳光数量
 static bullet peaShooterBullets[PEASHOOTERBULLETNUM]; // 豌豆子弹的数量
-static IMAGE imgPeaShooterBullets;// 豌豆子弹图片
+static IMAGE imgPeaShooterBullets; // 豌豆子弹图片
+static IMAGE imgPeaShooterBulletsExploded; // 豌豆子弹爆炸图片
+static IMAGE imgZombieDead[20]; // 僵尸死亡图片帧
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
@@ -106,7 +115,7 @@ static IMAGE imgZombieFrameIndex[22];
 static plant map[MAPROW][MAPCOL];// 植物地图
 
 // 处理PNG图片黑边问题
-void putimageForPNG(int  picture_x, int picture_y, IMAGE* picture);
+void putimageForPNG(int picture_x, int picture_y, IMAGE* picture);
 int getDelay();
 
 // 加载音乐
@@ -119,6 +128,7 @@ void CollectSunshineMusic();
 void FailChoosePlantMusic();
 void ZombiesComingMusic();
 void ZombiesGroanMusic();
+void PeaShooterBulletCollideMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
@@ -152,4 +162,5 @@ void UpdateZombies();
 void CreatePeaShooterBullets();
 // 更新豌豆射手子弹
 void UpdatePeaShooterBullets();
-
+// 豌豆子弹碰撞检测
+void CheckPeaShooterBulletsCollision();

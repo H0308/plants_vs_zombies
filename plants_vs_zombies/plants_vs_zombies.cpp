@@ -140,7 +140,7 @@ void ClickMenuMusic()
 void GamingBackgroundMusic()
 {
 	// 加载音乐文件
-	Mix_Chunk * sound = Mix_LoadWAV("res/music/grass.wav");
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/grass.wav");
 	if (!sound) {
 		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
@@ -181,7 +181,7 @@ void PlantsCultivate()
 	// 开始播放音乐
 	Mix_PlayChannel(-1, sound, 0);
 	// 将音量设置为50%
-	Mix_VolumeChunk(sound, 50); 
+	Mix_VolumeChunk(sound, 50);
 }
 
 // 阳光收集音乐
@@ -277,6 +277,21 @@ void ZombiesGroanMusic()
 		Mix_PlayChannel(-1, sound5, 0);
 	}
 }
+
+// 豌豆子弹碰撞音乐
+void PeaShooterBulletCollideMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/hit.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
 
 // 初始化菜单场景
 void StartInit()
@@ -379,7 +394,22 @@ void GamingInit()
 	}
 
 	// 加载豌豆子弹图片
-	loadimage(&imgPeaShooterBullets, "res/bullets/PeaNormal/PeaNormal_0.png");
+	loadimage(&imgPeaShooterBullets, "res/bullets/bullet_normal.png");
+
+	// 加载豌豆爆炸图片
+	loadimage(&imgPeaShooterBulletsExploded, "res/bullets/bullet_blast.png",
+		imgPeaShooterBulletsExploded.getwidth() * 0.2,
+		imgPeaShooterBulletsExploded.getheight() * 0.2,
+		true);
+
+	// 加载僵尸死亡图片帧照片
+	char zombie_dead_name[64] = { 0 };
+	for (int i = 0; i < 20; i++)
+	{
+		sprintf(zombie_dead_name, "res/zm_dead/Image%d.png", i + 1);
+		loadimage(&imgZombieDead[i], zombie_dead_name);
+	}
+
 
 	// 设置字体
 	LOGFONT font;
@@ -433,11 +463,17 @@ void ImageRenderGaming()
 	//渲染僵尸
 	for (int i = 0; i < ZOMBIENUM; i++)
 	{
-		if (zombies[i].isUse)
+		if (zombies[i].isDead)
+		{
+			IMAGE img = imgZombieDead[0];
+			putimageForPNG(zombies[i].x, zombies[i].y - img.getheight(),
+				&imgZombieDead[zombies[i].frameIndex]);
+		}
+		else
 		{
 			IMAGE img = imgZombieFrameIndex[0];
 			// 从僵尸脚的位置渲染
-			putimageForPNG(zombies[i].x, zombies[i].y - img.getheight(), 
+			putimageForPNG(zombies[i].x, zombies[i].y - img.getheight(),
 				&imgZombieFrameIndex[zombies[i].frameIndex]);
 		}
 	}
@@ -447,8 +483,16 @@ void ImageRenderGaming()
 	{
 		if (peaShooterBullets[i].isUse)
 		{
-			putimageForPNG(peaShooterBullets[i].x, peaShooterBullets[i].y, &imgPeaShooterBullets);
+			if (peaShooterBullets[i].isExplode)
+			{
+				putimageForPNG(peaShooterBullets[i].x, peaShooterBullets[i].y, &imgPeaShooterBulletsExploded);
+			}
+			else
+			{
+				putimageForPNG(peaShooterBullets[i].x, peaShooterBullets[i].y, &imgPeaShooterBullets);
+			}
 		}
+
 	}
 
 	// 渲染小推车
@@ -476,7 +520,7 @@ void ImageRenderGaming()
 	// 渲染阳光
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
-		if (sunshine_sky[i].isUse || sunshine_sky[i].xoffset || sunshine_sky[i].yoffset)
+		if (sunshine_sky[i].isUse || sunshine_sky[i].isClick)
 		{
 			putimageForPNG(sunshine_sky[i].x, sunshine_sky[i].y,
 				&imgSunFrameIndex[sunshine_sky[i].frameIndex]);
@@ -493,7 +537,7 @@ void MouseActionGaming()
 	// 接收鼠标消息
 	ExMessage msg;
 	// 如果鼠标有动作，则开始处理，否则不处理
-	if(peekmessage(&msg))
+	if (peekmessage(&msg))
 	{
 		// 鼠标左键单击
 		if (msg.message == WM_LBUTTONDOWN)
@@ -506,7 +550,7 @@ void MouseActionGaming()
 				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
 				curX = msg.x;
 				curY = msg.y;
-				
+
 				// 如果当前拥有的阳光数量大于点击植物的需求量，则选中，否则无法选择
 				ChoosePlant(index);
 			}
@@ -572,12 +616,12 @@ void UpdatePlantsMove()
 void CreateSunshine()
 {
 	static int count = 0;// 控制次数
-	static int frequent = 80;// 控制阳光产生的频率
+	static int frequent = 50;// 控制阳光产生的频率
 	count++;// 记录调用次数
 	if (count >= frequent)
 	{
 		// 通过随机数控制阳光产生的频率
-		frequent = rand() % 100; // [0, 99]
+		frequent = 80; // [100, 199]
 		count = 0;// 重新计数
 		// 先找到可用的阳光的下标
 		int i = 0;
@@ -592,17 +636,13 @@ void CreateSunshine()
 		{
 			// 更改新阳光的数据
 			sunshine_sky[i].x = 260 + rand() % (900 - 260); // [260, 899]
-			sunshine_sky[i].y = 140;
-			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 102; // [200, 486]
+			sunshine_sky[i].y = 170;
+			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 100; // [200, 500]
 			sunshine_sky[i].frameIndex = 0; // 从第一张帧照片开始
+			sunshine_sky[i].timer = 0;
 			// 将阳光使用状态改为1
+			sunshine_sky[i].isClick = 0;
 			sunshine_sky[i].isUse = 1;
-
-			// 计算角度
-			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
-			// 根据角度计算偏移量
-			sunshine_sky[i].yoffset = SUNSHINESPEED * sin(angle);
-			sunshine_sky[i].xoffset = SUNSHINESPEED * cos(angle);
 		}
 	}
 }
@@ -612,14 +652,14 @@ void UpdateSunshine()
 {
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
-		if (sunshine_sky[i].isUse)
+		if (sunshine_sky[i].isUse && sunshine_sky[i].isClick == 0)
 		{
 			// 更新阳光图片帧
 			sunshine_sky[i].frameIndex = (sunshine_sky[i].frameIndex + 1) % 29;
 			// 更新y坐标
 			if (sunshine_sky[i].timer == 0)
 			{
-				sunshine_sky[i].y += 5;
+				sunshine_sky[i].y += 6;
 			}
 			// 到达dest位置，阳光停留一段时间，再销毁阳光
 			if (sunshine_sky[i].y >= sunshine_sky[i].dest)
@@ -632,24 +672,9 @@ void UpdateSunshine()
 				}
 			}
 		}
-		else if (sunshine_sky[i].xoffset || sunshine_sky[i].yoffset)
+		else if (sunshine_sky[i].isClick)
 		{
-			// 计算角度
-			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
-			// 根据角度计算偏移量
-			sunshine_sky[i].yoffset = SUNSHINESPEED * sin(angle);
-			sunshine_sky[i].xoffset = SUNSHINESPEED * cos(angle);
-			// 更新阳光坐标
-			sunshine_sky[i].x -= sunshine_sky[i].xoffset;
-			sunshine_sky[i].y -= sunshine_sky[i].yoffset;
-			// 判断结束飞行
-			if (sunshine_sky[i].x < 262 || sunshine_sky[i].y < 0)
-			{
-				sunshineScore += PERSUNSHINE;
-				// 偏移量更新为0
-				sunshine_sky[i].xoffset = 0;
-				sunshine_sky[i].yoffset = 0;
-			}
+			
 		}
 	}
 }
@@ -669,6 +694,8 @@ void CollectSunshine(ExMessage* msg)
 				msg->y >= sunshine_sky[i].y && msg->y <= sunshine_sky[i].y + height)
 			{
 				// 收集阳光
+				// 更新点击状态为1
+				sunshine_sky[i].isClick = 1;
 				// 更新阳光状态为0
 				sunshine_sky[i].isUse = 0;
 				// 播放收集阳光音乐
@@ -697,7 +724,7 @@ void ChoosePlant(int index)
 			}
 		}
 		else
-		{	
+		{
 			// 播放音乐无法选择
 			FailChoosePlantMusic();
 		}
@@ -742,10 +769,15 @@ void CreateZombies()
 		{
 			// 更新僵尸数据
 			zombies[i].x = 900;
-			zombies[i].y = 170 + (1 + rand() % 3) * 100;
+			zombies[i].row = rand() % 3;// 初始化僵尸所在行
+			zombies[i].y = 170 + (1 + zombies[i].row) * 100;
 			zombies[i].frameIndex = 0;
 			zombies[i].isUse = 1;
 			zombies[i].speed = 1;
+			// 设置僵尸血量
+			zombies[i].blood = 100;
+			// 设置僵尸起始状态
+			zombies[i].isDead = 0;
 			// 标志第一个僵尸诞生
 			comingSign++;
 		}
@@ -767,7 +799,7 @@ void UpdateZombies()
 		count = 0;
 		for (int i = 0; i < ZOMBIENUM; i++)
 		{
-			if (zombies[i].isUse) 
+			if (zombies[i].isUse)
 			{
 				// 更新动作帧照片
 				zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 22;
@@ -790,6 +822,7 @@ void UpdateZombies()
 					exit(0);// 游戏结束
 				}
 			}
+
 		}
 	}
 }
@@ -798,17 +831,15 @@ void UpdateZombies()
 void CreatePeaShooterBullets()
 {
 	// 先找到有僵尸的行位置
-	int y = 0;
+	int zombieRow[3] = { 0 };
 	for (int i = 0; i < ZOMBIENUM; i++)
 	{
-		if (zombies[i].isUse)
+		// 存在僵尸并且僵尸越过警戒线时记录
+		if (zombies[i].isUse && zombies[i].x <= PEASHOOTERSAFETYLINE)
 		{
-			y = zombies[i].y + imgZombieFrameIndex[0].getheight();
+			zombieRow[zombies[i].row] = 1;// 存在僵尸时将该行标记为1
 		}
 	}
-
-	// 计算僵尸所在行数
-	int zombieRow = y % 102;
 
 	// 找到有豌豆射手的位置，创建豌豆子弹
 	for (int i = 0; i < MAPROW; i++)
@@ -816,31 +847,34 @@ void CreatePeaShooterBullets()
 		for (int j = 0; j < MAPCOL; j++)
 		{
 			// 找到豌豆射手的位置并且确定豌豆射手的位置与僵尸的位置在同一行
-			if (map[i][j].type == peaShooter.type)
+			if (map[i][j].type == peaShooter.type && zombieRow[i])
 			{
-
-				int plantRow = map[i][j].y % 102;
-				printf("%d %d\n", plantRow, zombieRow);
-
-				if (zombieRow == plantRow)
+				// 控制执行次数
+				static int count = 0;
+				count++;
+				// 僵尸越过警戒线就开始攻击
+				if (count > 20)
 				{
-					// 僵尸越过警戒线就开始攻击
-					if (zombies[i].x <= PEASHOOTERSAFETYLINE)
+					count = 0;
+					int k = 0;
+					// 找到可用
+					while (k < PEASHOOTERBULLETNUM && peaShooterBullets[k].isUse)
 					{
-						for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
-						{
-							if (peaShooterBullets[k].isUse == 0)
-							{
-								// 创建当前行的豌豆子弹
-								peaShooterBullets[k].x = map[i][j].x + imgPlantsMove[Pea_Shooter][0]->getwidth();
-								peaShooterBullets[k].y = map[i][j].y + imgPlantsMove[Pea_Shooter][0]->getheight() / 4;
-
-								// 初始化子弹其余变量
-								peaShooterBullets[k].isUse = 1;
-								peaShooterBullets[k].speed = 5;
-							}
-						}
+						k++;
 					}
+
+					// 创建当前行的豌豆子弹
+					// 根据植物种植位置判断子弹出现位置
+					int x = 257 + j * 81;
+					int y = 179 + i * 102;
+					peaShooterBullets[k].x = x + imgPlantsMove[Pea_Shooter][0]->getwidth() - 15;
+					peaShooterBullets[k].y = y + 5;
+					peaShooterBullets[k].isExplode = 0;
+
+					// 初始化子弹其余变量
+					peaShooterBullets[k].row = i; // 豌豆所在行即豌豆子弹所在行
+					peaShooterBullets[k].isUse = 1;
+					peaShooterBullets[k].speed = 30;
 				}
 			}
 		}
@@ -856,13 +890,25 @@ void UpdatePeaShooterBullets()
 		if (peaShooterBullets[i].isUse)
 		{
 			peaShooterBullets[i].x += peaShooterBullets[i].speed;
-			// 如果子弹越过警戒线则销毁，后期更改为击中销毁
+			// 如果子弹越过警戒线则销毁，或者碰到僵尸销毁
 			if (peaShooterBullets[i].x >= PEASHOOTERSAFETYLINE)
 			{
 				peaShooterBullets[i].isUse = 0;
 			}
+
+			if (peaShooterBullets[i].isExplode)
+			{
+				peaShooterBullets[i].isUse = 0;
+				PeaShooterBulletCollideMusic();
+			}
 		}
 	}
+}
+
+// 豌豆子弹碰撞检测
+void CheckPeaShooterBulletsCollision()
+{
+
 }
 
 // 游戏开始界面菜单
@@ -936,6 +982,8 @@ void UpdateGameData()
 	CreatePeaShooterBullets();
 	// 更新豌豆子弹
 	UpdatePeaShooterBullets();
+	// 豌豆子弹碰撞
+	CheckPeaShooterBulletsCollision();
 }
 
 // 游戏进行
