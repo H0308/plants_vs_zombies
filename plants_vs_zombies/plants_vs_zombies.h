@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <cmath>
+#include <conio.h>
 
 #define WIDTH 900 // 游戏窗口宽度
 #define HEIGHT 600 // 游戏窗口高度
@@ -16,7 +17,7 @@
 #define SUNSHINESPEED 80 // 阳光飞行速度
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
 #define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
-#define PEASHOOTERBULLETDAMAGE 20 // 豌豆子弹的伤害
+#define PEASHOOTERBULLETDAMAGE 10 // 豌豆子弹的伤害
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -97,6 +98,7 @@ struct bullet
 	int row; // 子弹出现的行
 };
 
+
 // 存储阳光数组
 static sunshineFromSky sunshine_sky[SUNSHINENUM];
 // 阳光动作帧照片数组
@@ -105,7 +107,7 @@ static int sunshineScore; // 当前阳光数量
 static bullet peaShooterBullets[PEASHOOTERBULLETNUM]; // 豌豆子弹的数量
 static IMAGE imgPeaShooterBullets; // 豌豆子弹图片
 static IMAGE imgPeaShooterBulletsExploded; // 豌豆子弹爆炸图片
-static IMAGE imgZombieDead[20]; // 僵尸死亡图片帧
+static IMAGE imgZombieDead[11]; // 僵尸死亡图片帧
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
@@ -115,7 +117,7 @@ static IMAGE imgZombieFrameIndex[22];
 static plant map[MAPROW][MAPCOL];// 植物地图
 
 // 处理PNG图片黑边问题
-void putimageForPNG(int picture_x, int picture_y, IMAGE* picture);
+void putimageForPNG(IMAGE* dstimg, int x, int y, IMAGE* srcimg, UINT transparentcolor);
 int getDelay();
 
 // 加载音乐
