@@ -306,6 +306,20 @@ void PeaShooterBulletCollideMusic()
 	Mix_PlayChannel(-1, sound, 0);
 }
 
+// 僵尸吃植物音乐
+void ZombieEatingMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/eating.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+	Mix_VolumeChunk(sound, 50);
+}
 
 // 初始化菜单场景
 void StartInit()
@@ -426,6 +440,13 @@ void GamingInit()
 		loadimage(&imgZombieDead[i], zombie_dead_name);
 	}
 
+	// 加载僵尸吃植物动画帧照片
+	char zombie_eat_name[64] = { 0 };
+	for (int i = 0; i < 21; i++)
+	{
+		sprintf(zombie_eat_name, "res/zm_eat/%d.png", i + 1);
+		loadimage(&imgZombieEat[i], zombie_eat_name);
+	}
 
 	// 设置字体
 	LOGFONT font;
@@ -466,7 +487,7 @@ void ImageRenderGaming()
 		for (int j = 0; j < MAPCOL; j++)
 		{
 			// 有植物时渲染
-			if (map[i][j].type > -1)
+			if (map[i][j].type > -1 && map[i][j].eaten == 0)
 			{
 				// 计算出x和y坐标作为渲染位置
 				int x = 257 + j * 81;
@@ -484,6 +505,12 @@ void ImageRenderGaming()
 			IMAGE img = imgZombieDead[0];
 			putimageForPNG(NULL, zombies[i].x, zombies[i].y - img.getheight(),
 				&imgZombieDead[zombies[i].frameIndex], BLACK);
+		}
+		else if (zombies[i].isEat)
+		{
+			IMAGE img = imgZombieEat[0];
+			putimageForPNG(NULL, zombies[i].x, zombies[i].y - img.getheight(),
+				&imgZombieEat[zombies[i].frameIndex], BLACK);
 		}
 		else
 		{
@@ -592,6 +619,10 @@ void MouseActionGaming()
 					map[row][col].frameIndex = 0;
 					map[row][col].x = col;
 					map[row][col].y = row;
+					// 设置植物血量
+					map[row][col].blood = PLANTBLOOD;
+					// 起始植物未被吃掉
+					map[row][col].eaten = 0;
 					PlantsCultivate();
 				}
 
@@ -611,7 +642,7 @@ void UpdatePlantsMove()
 	{
 		for (int j = 0; j < MAPCOL; j++)
 		{
-			if (map[i][j].type > -1)
+			if (map[i][j].type > -1 && map[i][j].eaten == 0)
 			{
 				// 更新植物运动
 				map[i][j].frameIndex++;
@@ -812,6 +843,7 @@ void CreateZombies()
 			zombies[i].blood = 100;
 			// 设置僵尸起始状态
 			zombies[i].isDead = 0;
+			zombies[i].isEat = 0;
 			// 标志第一个僵尸诞生
 			comingSign++;
 		}
@@ -837,18 +869,26 @@ void UpdateZombies()
 			{
 				if (zombies[i].blood > 0)
 				{
-					// 更新动作帧照片
-					zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 22;
-					// 更新僵尸位置
-					zombies[i].x -= zombies[i].speed;
-					static int playcount = 0;
-					static int playFrequent = 150;
-					playcount++;
-					if (playcount > playFrequent)
+					if (zombies[i].isEat == 0)
 					{
-						playcount = 0;
-						playFrequent += rand() % 200 + 50;
-						ZombiesGroanMusic();
+						// 更新动作帧照片
+						zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 22;
+						// 更新僵尸位置
+						zombies[i].x -= zombies[i].speed;
+						static int playcount = 0;
+						static int playFrequent = 150;
+						playcount++;
+						if (playcount > playFrequent)
+						{
+							playcount = 0;
+							playFrequent += rand() % 200 + 50;
+							ZombiesGroanMusic();
+						}
+					}
+					CheckZombieCollision();
+					if (zombies[i].isEat) 
+					{
+						zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 21;
 					}
 					// 僵尸到达草坪左边界
 					if (zombies[i].x <= 150)
@@ -892,7 +932,7 @@ void CreatePeaShooterBullets()
 		for (int j = 0; j < MAPCOL; j++)
 		{
 			// 找到豌豆射手的位置并且确定豌豆射手的位置与僵尸的位置在同一行
-			if (map[i][j].type == peaShooter.type && zombieRow[i])
+			if (map[i][j].type == peaShooter.type && zombieRow[i] && map[i][j].eaten == 0)
 			{
 				// 控制执行次数
 				static int counts[MAPROW] = { 0 }; // 每行的计数器
@@ -970,7 +1010,7 @@ void CheckPeaShooterBulletsCollision()
 							// 子弹碰撞
 							// 僵尸血量减少
 							zombies[j].blood -= PEASHOOTERBULLETDAMAGE;
-							printf("%d %d %d\n", peaShooterBullets[i].row, zombies[j].row, zombies[j].blood);
+							// printf("%d %d %d\n", peaShooterBullets[i].row, zombies[j].row, zombies[j].blood);
 							peaShooterBullets[i].isExplode = 1;
 							peaShooterBullets[i].speed = 0;
 							// 更新子弹的使用状态
@@ -990,6 +1030,80 @@ void CheckPeaShooterBulletsCollision()
 							}
 							// 当前的子弹击中当前僵尸后不需要比较后面的子弹是否击中
 							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// 僵尸碰到植物检测
+void CheckZombieCollision()
+{
+	// 找到僵尸所在行
+	for (int i = 0; i < ZOMBIENUM; i++)
+	{
+		int row = zombies[i].row;
+		// 根据行找当前行是否有植物
+		for (int j = 0; j < MAPCOL; j++)
+		{
+			// 僵尸出现的行存在植物
+			if (map[row][j].type > -1 && map[row][j].eaten == 0)
+			{
+				// 左侧植物的坐标
+				int left = 257 + j * 81 + 10;
+				int right = 257 + j * 81 + 60;
+				// 如果僵尸还活着就吃植物
+				if (zombies[i].isDead == 0 && zombies[i].x + 80 >= left && zombies[i].x + 80 <= right)
+				{
+					// 僵尸动画帧更改时机控制
+					static int frameMove = 0;
+					frameMove++;
+					if (frameMove == 1)
+					{
+						// 更改僵尸的动画帧
+						zombies[i].frameIndex = 0;
+					}
+					// 僵尸状态更新
+					zombies[i].isEat = 1;
+					// 吃植物时僵尸不移动
+					zombies[i].speed = 0;
+					// 控制僵尸吃植物的速度
+					static int count = 0;
+					count++;
+					if (count > 25)
+					{
+						count = 0;
+						// 植物血量减少
+						map[row][j].blood -= EATDAMAGE;
+						printf("%d %d %d\n", row, j, map[row][j].blood);
+					}
+					if (map[row][j].blood > 0)
+					{
+						ZombieEatingMusic();
+					}
+					if (map[row][j].blood == 0)
+					{
+						// 植物被吃掉
+						map[row][j].eaten = 1;
+						// 僵尸恢复样式
+						for (int k = 0; k < ZOMBIENUM; k++)
+						{
+							// 找到还在吃但是植物已经没了的僵尸恢复其状态
+							if (zombies[k].isEat && map[row][j].eaten)
+							{
+								zombies[k].frameIndex = 0;
+								zombies[k].speed = 1;
+								zombies[k].isEat = 0;
+							}
+						}
+						// 将帧更新归零
+						frameMove = 0;
+						// 清空所有已发射的子弹防止豌豆死亡子弹停留
+						for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
+						{
+							peaShooterBullets[k].isExplode = 0;
 						}
 					}
 				}

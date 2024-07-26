@@ -18,6 +18,8 @@
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
 #define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
 #define PEASHOOTERBULLETDAMAGE 10 // 豌豆子弹的伤害
+#define PLANTBLOOD 100
+#define EATDAMAGE 10
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -64,6 +66,8 @@ struct plant
 	int type; // 记录当前种植的植物，-1默认没有植物
 	int frameIndex; // 记录动作帧
 	int x, y; // 植物所在坐标
+	int blood; // 每一个植物的血量
+	int eaten; // 植物是否被吃掉
 };
 
 struct sunshineFromSky
@@ -87,6 +91,7 @@ struct zombie
 	int blood; // 僵尸血量
 	int row; // 僵尸出现的行
 	int isDead; // 僵尸是否死亡
+	int isEat; // 僵尸是否吃植物
 };
 
 struct bullet
@@ -108,6 +113,7 @@ static bullet peaShooterBullets[PEASHOOTERBULLETNUM]; // 豌豆子弹的数量
 static IMAGE imgPeaShooterBullets; // 豌豆子弹图片
 static IMAGE imgPeaShooterBulletsExploded; // 豌豆子弹爆炸图片
 static IMAGE imgZombieDead[11]; // 僵尸死亡图片帧
+static IMAGE imgZombieEat[21]; // 僵尸吃植物图片帧
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
@@ -131,6 +137,7 @@ void FailChoosePlantMusic();
 void ZombiesComingMusic();
 void ZombiesGroanMusic();
 void PeaShooterBulletCollideMusic();
+void ZombieEatingMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
@@ -166,3 +173,5 @@ void CreatePeaShooterBullets();
 void UpdatePeaShooterBullets();
 // 豌豆子弹碰撞检测
 void CheckPeaShooterBulletsCollision();
+// 僵尸碰到植物检测
+void CheckZombieCollision();
