@@ -14,12 +14,14 @@
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
 #define ZOMBIENUM 10 // 僵尸的数量
-#define SUNSHINESPEED 80 // 阳光飞行速度
+#define SUNSHINESPEED 100 // 阳光飞行速度
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
 #define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
 #define PEASHOOTERBULLETDAMAGE 10 // 豌豆子弹的伤害
-#define PLANTBLOOD 100
-#define EATDAMAGE 10
+#define PLANTBLOOD 100 // 植物的血量
+#define EATDAMAGE 10 // 僵尸吃植物的伤害
+#define GRAVITY 7 // 重力加速度
+#define PI 3.14 // 圆周率
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -82,6 +84,22 @@ struct sunshineFromSky
 	double yoffset; // y坐标偏移量
 };
 
+struct sunshineFromSunflower
+{
+	double start_x, start_y; // 起始位置
+	double end_x, end_y; // 终点位置
+	double angle; // 起始角度
+	double speed; // 起始速度
+	double t_change; // 变化时间
+	double max_y; // 最高点位置
+	int frameIndex; // 记录图片帧
+	int isUse; // 阳光是否被使用
+	int timer; // 计时器记录阳光在掉落点停留时间
+	int isClick; // 阳光是否被点击
+	double xoffset; // x坐标偏移量
+	double yoffset; // y坐标偏移量
+};
+
 struct zombie
 {
 	int x, y; // 僵尸位置
@@ -103,12 +121,15 @@ struct bullet
 	int row; // 子弹出现的行
 };
 
-
 // 存储阳光数组
 static sunshineFromSky sunshine_sky[SUNSHINENUM];
 // 阳光动作帧照片数组
-static IMAGE imgSunFrameIndex[29];
-static int sunshineScore; // 当前阳光数量
+static IMAGE imgSun_skyFrameIndex[29];
+// 存储向日葵阳光
+static sunshineFromSunflower sunshine_sunflower[SUNSHINENUM];
+static IMAGE imgSun_flowerFrameIndex[29];
+
+static int sunshineScore; // 当前阳光分数
 static bullet peaShooterBullets[PEASHOOTERBULLETNUM]; // 豌豆子弹的数量
 static IMAGE imgPeaShooterBullets; // 豌豆子弹图片
 static IMAGE imgPeaShooterBulletsExploded; // 豌豆子弹爆炸图片
@@ -156,11 +177,19 @@ void UpdateGameData();
 // 更新植物运动
 void UpdatePlantsMove();
 // 创建阳光
-void CreateSunshine();
+void CreateSunshineFromSky();
 // 更新阳光
-void UpdateSunshine();
+void UpdateSunshineFromSky();
+// 创建向日葵阳光
+void CreateSunshineFromSunflower();
+// 更新向日葵阳光
+void UpdateSunshineFromSunflower();
 // 收集阳光
 void CollectSunshine(ExMessage* msg);
+// 收集来自天空的阳光
+void CollectSunshineFromSky(ExMessage* msg);
+// 收集向日葵阳光
+void CollectSunshineFromSunFlower(ExMessage* msg);
 // 选择植物
 void ChoosePlant(int index);
 // 创建僵尸

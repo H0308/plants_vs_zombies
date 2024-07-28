@@ -357,7 +357,7 @@ void GamingInit()
 	// 起始不存在植物
 	curPlant = -1;
 	// 阳光初始值
-	sunshineScore = 300;
+	sunshineScore = 50;
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
@@ -365,6 +365,7 @@ void GamingInit()
 	memset(map, -1, sizeof(map));
 	// 初始化阳光数组中的所有值为0
 	memset(sunshine_sky, 0, sizeof(sunshine_sky));
+	memset(sunshine_sunflower, 0, sizeof(sunshine_sunflower));
 	// 初始化僵尸数组中的所有值为0
 	memset(zombies, 0, sizeof(zombies));
 	// 设置豌豆子弹数组的所有值为0
@@ -410,7 +411,14 @@ void GamingInit()
 	for (int i = 0; i < 29; i++)
 	{
 		sprintf(sun_name, "res/sunshine/%d.png", i + 1);
-		loadimage(&imgSunFrameIndex[i], sun_name);
+		loadimage(&imgSun_skyFrameIndex[i], sun_name);
+	}
+
+	char sun[64] = { 0 };
+	for (int i = 0; i < 29; i++)
+	{
+		sprintf(sun, "res/sunshine/%d.png", i + 1);
+		loadimage(&imgSun_flowerFrameIndex[i], sun);
 	}
 
 	// 读取僵尸到僵尸动作帧数组中
@@ -562,12 +570,28 @@ void ImageRenderGaming()
 		if (sunshine_sky[i].isUse || sunshine_sky[i].isClick)
 		{
 			putimageForPNG(NULL, sunshine_sky[i].x, sunshine_sky[i].y,
-				&imgSunFrameIndex[sunshine_sky[i].frameIndex], BLACK);
+				&imgSun_skyFrameIndex[sunshine_sky[i].frameIndex], BLACK);
+		}
+	}
+
+	// 渲染阳光
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		if (sunshine_sunflower[i].isUse || sunshine_sunflower[i].isClick)
+		{
+			putimageForPNG(NULL, sunshine_sunflower[i].start_x, sunshine_sunflower[i].start_y,
+				&imgSun_flowerFrameIndex[sunshine_sunflower[i].frameIndex], BLACK);
 		}
 	}
 
 	// 结束缓冲
 	EndBatchDraw();
+}
+
+void CollectSunshine(ExMessage* msg)
+{
+	CollectSunshineFromSky(msg);
+	CollectSunshineFromSunFlower(msg);
 }
 
 // 处理游戏过程中的操作
@@ -655,8 +679,8 @@ void UpdatePlantsMove()
 	}
 }
 
-// 创建阳光
-void CreateSunshine()
+// 创建天上的阳光
+void CreateSunshineFromSky()
 {
 	static int count = 0;// 控制次数
 	static int frequent = 50;// 控制阳光产生的频率
@@ -664,7 +688,7 @@ void CreateSunshine()
 	if (count >= frequent)
 	{
 		// 通过随机数控制阳光产生的频率
-		frequent = 80; // [100, 199]
+		frequent = 150; // [100, 199]
 		count = 0;// 重新计数
 		// 先找到可用的阳光的下标
 		int i = 0;
@@ -694,8 +718,8 @@ void CreateSunshine()
 	}
 }
 
-// 更新阳光
-void UpdateSunshine()
+// 更新天上的阳光
+void UpdateSunshineFromSky()
 {
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
@@ -738,16 +762,163 @@ void UpdateSunshine()
 	}
 }
 
+// 创建向日葵阳光
+void CreateSunshineFromSunflower()
+{
+	static int count = 0;// 控制次数
+	static int frequent = 80;// 控制阳光产生的频率
+	count++;// 记录调用次数
+	if (count >= frequent)
+	{
+		// 通过随机数控制阳光产生的频率
+		frequent = 100; // [100, 199]
+		count = 0;// 重新计数
+		// 找到种向日葵的位置
+		int row = -1;
+		int col = -1;
+		static int lastRow = 0;
+		static int lastCol = 0;
+		static int sunflowerCount = 0;
+		static int data[3] = { 0 };
+		for (int i = 0; i < MAPROW; i++)
+		{
+			if (data[i] == 0)
+			{
+				data[i] = 1;
+			}
+			else if (data[0] && data[1])
+			{
+				i = 2;
+				data[0] = data[1] = 0;
+			}
+			for (int j = 0; j < MAPCOL; j++)
+			{
+				// 记录位置
+				if (map[i][j].type == sunflower.type)
+				{
+					row = i;
+					col = j;
+					break;
+				}
+			}
+
+			if(row != lastRow || col != lastCol)
+			{
+				lastRow = row;
+				lastCol = col;
+				sunflowerCount++;
+				break;
+			}
+		}
+
+		// 找到可用的阳光的下标
+		int i = 0;
+		while (i < SUNSHINENUM && sunshine_sunflower[i].isUse)
+		{
+			i++;
+		}
+
+		int x = 257 + col * 81;
+		int y = 179 + row * 102;
+
+		// 确定位置创建阳光
+		if (row < MAPROW && col < MAPCOL && map[row][col].type == sunflower.type && i < SUNSHINENUM)
+		{
+			// 初始化起始位置和终点位置
+			double startX = x + 10;
+			double startY = y + 10;
+			double endX = startX + 50;
+			double endY = startY + 70;
+			sunshine_sunflower[i].speed = 5;
+			sunshine_sunflower[i].t_change = 1;
+			sunshine_sunflower[i].start_x = startX;
+			sunshine_sunflower[i].start_y = startY;
+			printf("运动x方向：%f\n", sunshine_sunflower[i].start_x);
+			printf("运动y方向：%f\n", sunshine_sunflower[i].start_y);
+			sunshine_sunflower[i].end_x = endX;
+			sunshine_sunflower[i].end_y = endY;
+			// 初始化斜抛角度
+			sunshine_sunflower[i].angle = 85;
+			// 初始化其余变量
+			sunshine_sunflower[i].isUse = 1;
+			sunshine_sunflower[i].isClick = 0;
+			sunshine_sunflower[i].timer = 0;
+			sunshine_sunflower[i].frameIndex = 0;
+			sunshine_sunflower[i].max_y = (sunshine_sunflower[i].speed * sin((sunshine_sunflower[i].angle * PI / 180)) * sunshine_sunflower[i].speed * sin((sunshine_sunflower[i].angle * PI / 180))) / (2 * GRAVITY) + sunshine_sunflower[i].start_y - 50;
+			printf("最高点高度：%f\n", sunshine_sunflower[i].max_y);
+		}
+	}
+}
+
+// 更新向日葵阳光
+void UpdateSunshineFromSunflower()
+{
+	// 找到向日葵阳光
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		// 计算最高点高度
+		if (sunshine_sunflower[i].isUse)
+		{
+			// 更新阳光图片帧
+			sunshine_sunflower[i].frameIndex = (sunshine_sunflower[i].frameIndex + 1) % 29;
+			if (sunshine_sunflower[i].timer == 0)
+			{
+
+				if (sunshine_sunflower[i].start_y >= sunshine_sunflower[i].max_y)
+				{
+					// 水平方向位移，x轴正方向向右，持续增加
+					sunshine_sunflower[i].start_x += sunshine_sunflower[i].speed * cos((sunshine_sunflower[i].angle * PI / 180)) * sunshine_sunflower[i].t_change;
+					// 竖直方向位移，y轴正方向向下，先减后增
+					sunshine_sunflower[i].start_y -= (sunshine_sunflower[i].speed * sin((sunshine_sunflower[i].angle * PI / 180)) * sunshine_sunflower[i].t_change - 0.5 * GRAVITY * pow(sunshine_sunflower[i].t_change, 2));
+					// angle为0时为平抛运动
+					if (sunshine_sunflower[i].angle > 0)
+					{
+						sunshine_sunflower[i].angle -= 15;
+					}
+					printf("斜抛运动x方向：%f\n", sunshine_sunflower[i].start_x);
+					printf("斜抛运动y方向：%f\n", sunshine_sunflower[i].start_y);
+					printf("斜抛运动y方向角度：%f\n", sunshine_sunflower[i].angle);
+				}
+			}
+			if (sunshine_sunflower[i].start_x >= sunshine_sunflower[i].end_x || sunshine_sunflower[i].start_y >= sunshine_sunflower[i].end_y)
+			{
+				sunshine_sunflower[i].timer++;
+				if (sunshine_sunflower[i].timer > 120)
+				{
+					sunshine_sunflower[i].isUse = 0;
+					sunshine_sunflower[i].timer = 0;
+				}
+			}
+		}
+		else if (sunshine_sunflower[i].isClick)
+		{
+			double angle = atan(sunshine_sunflower[i].start_y / (sunshine_sunflower[i].start_x - 262));
+			sunshine_sunflower[i].xoffset = 60 * cos(angle);
+			sunshine_sunflower[i].yoffset = 60 * sin(angle);
+
+			// 计算角度
+			sunshine_sunflower[i].start_x -= sunshine_sunflower[i].xoffset;
+			sunshine_sunflower[i].start_y -= sunshine_sunflower[i].yoffset;
+
+			if (sunshine_sunflower[i].start_x <= 262 || sunshine_sunflower[i].start_y <= 0)
+			{
+				sunshine_sunflower[i].isClick = 0;
+				sunshineScore += PERSUNSHINE;
+			}
+		}
+	}
+}
+
 // 收集阳光
-void CollectSunshine(ExMessage* msg)
+void CollectSunshineFromSky(ExMessage* msg)
 {
 	// 找到正在使用的阳光
 	for (int i = 0; i < SUNSHINENUM; i++)
 	{
 		if (sunshine_sky[i].isUse)
 		{
-			int width = imgSunFrameIndex[0].getwidth();// 获取到太阳的宽度
-			int height = imgSunFrameIndex[0].getheight(); // 获取太阳的高度
+			int width = imgSun_skyFrameIndex[0].getwidth();// 获取到太阳的宽度
+			int height = imgSun_skyFrameIndex[0].getheight(); // 获取太阳的高度
 			// 判断是否在阳光的可点击范围内
 			if (msg->x >= sunshine_sky[i].x && msg->x <= sunshine_sky[i].x + width &&
 				msg->y >= sunshine_sky[i].y && msg->y <= sunshine_sky[i].y + height)
@@ -766,6 +937,38 @@ void CollectSunshine(ExMessage* msg)
 			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
 			sunshine_sky[i].xoffset = 60 * cos(angle);
 			sunshine_sky[i].yoffset = 60 * sin(angle);
+		}
+	}
+}
+
+// 收集向日葵阳光
+void CollectSunshineFromSunFlower(ExMessage* msg)
+{
+	// 找到正在使用的阳光
+	for (int i = 0; i < SUNSHINENUM; i++)
+	{
+		if (sunshine_sunflower[i].isUse)
+		{
+			int width = imgSun_flowerFrameIndex[0].getwidth();// 获取到太阳的宽度
+			int height = imgSun_flowerFrameIndex[0].getheight(); // 获取太阳的高度
+			// 判断是否在阳光的可点击范围内
+			if (msg->x >= sunshine_sunflower[i].start_x && msg->x <= sunshine_sunflower[i].start_x + width &&
+				msg->y >= sunshine_sunflower[i].start_y && msg->y <= sunshine_sunflower[i].start_y + height)
+			{
+				// 收集阳光
+				sunshine_sunflower[i].isClick = 1;
+				// 更新阳光状态为0
+				sunshine_sunflower[i].isUse = 0;
+				// 播放收集阳光音乐
+				CollectSunshineMusic();
+			}
+		}
+		else if (sunshine_sunflower[i].isClick)
+		{
+			// 计算斜率θ
+			double angle = atan(sunshine_sunflower[i].start_x / (sunshine_sunflower[i].start_x - 262));
+			sunshine_sunflower[i].xoffset = 60 * cos(angle);
+			sunshine_sunflower[i].yoffset = 60 * sin(angle);
 		}
 	}
 }
@@ -815,13 +1018,13 @@ void ChoosePlant(int index)
 // 创建僵尸
 void CreateZombies()
 {
-	static int frequent = 100; // 控制僵尸创建频率
+	static int frequent = 150; // 控制僵尸创建频率
 	static int count = 0; // 控制执行次数
 	static int comingSign = 0; // 标志第一个僵尸产生
 	count++;
 	if (count >= frequent)
 	{
-		frequent = 100;
+		frequent = 200;
 		count = 0;
 		// 找到未使用的僵尸
 		int i = 0;
@@ -886,7 +1089,7 @@ void UpdateZombies()
 						}
 					}
 					CheckZombieCollision();
-					if (zombies[i].isEat) 
+					if (zombies[i].isEat)
 					{
 						zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 21;
 					}
@@ -981,7 +1184,7 @@ void UpdatePeaShooterBullets()
 			// 子弹碰撞检测
 			CheckPeaShooterBulletsCollision();
 			// 如果子弹越过警戒线或者碰到僵尸销毁
-			if (peaShooterBullets[i].x > PEASHOOTERSAFETYLINE || peaShooterBullets[i].isExplode)
+			if (peaShooterBullets[i].x > PEASHOOTERSAFETYLINE + 20 || peaShooterBullets[i].isExplode)
 			{
 				peaShooterBullets[i].isUse = 0;
 			}
@@ -1027,6 +1230,11 @@ void CheckPeaShooterBulletsCollision()
 								zombies[j].isDead = 1;
 								// 僵尸的死亡动画图片帧
 								zombies[j].frameIndex = 0;
+								// 清空所有已发射的子弹防止豌豆死亡子弹停留
+								for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
+								{
+									peaShooterBullets[k].isExplode = 0;
+								}
 							}
 							// 当前的子弹击中当前僵尸后不需要比较后面的子弹是否击中
 							break;
@@ -1154,6 +1362,7 @@ void GameStartMenu()
 			else if (msg.message == WM_LBUTTONUP && status_leftClick)
 			{
 				status_leftClick = 0;
+				EndBatchDraw();
 				break;
 			}
 		}
@@ -1172,9 +1381,13 @@ void UpdateGameData()
 	// 更新植物动作
 	UpdatePlantsMove();
 	// 创建阳光
-	CreateSunshine();
+	CreateSunshineFromSky();
 	// 更新阳光
-	UpdateSunshine();
+	UpdateSunshineFromSky();
+	// 创建阳光
+	CreateSunshineFromSunflower();
+	// 更新阳光
+	UpdateSunshineFromSunflower();
 	// 创建僵尸
 	CreateZombies();
 	// 僵尸移动
@@ -1214,7 +1427,7 @@ void Gaming()
 
 		// 更新游戏数据
 		time += getDelay();
-		if (time > 100)
+		if (time >= 80)
 		{
 			UpdateGameData();
 			time = 0;
