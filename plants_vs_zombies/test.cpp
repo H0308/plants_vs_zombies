@@ -25,6 +25,10 @@ int main()
 	GameStartMenu();
 	// 初始化游戏场景
 	GamingInit();
+	// 加载巡视界面
+	Overlooking();
+	// 展示植物卡牌
+	ShowPlantBoard();
 	// 启动界面
 	// 开始游戏
 	Gaming();

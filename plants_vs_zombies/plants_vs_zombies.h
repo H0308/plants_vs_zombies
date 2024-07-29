@@ -13,10 +13,10 @@
 #define CARNUM 3 // 小推车的个数
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
-#define ZOMBIENUM 10 // 僵尸的数量
+#define ZOMBIENUM 20 // 僵尸的数量
 #define SUNSHINESPEED 100 // 阳光飞行速度
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
-#define PEASHOOTERSAFETYLINE 850 // 豌豆射手攻击警戒线的位置
+#define PEASHOOTERSAFETYLINE 930 // 豌豆射手攻击警戒线的位置
 #define PEASHOOTERBULLETDAMAGE 10 // 豌豆子弹的伤害
 #define PLANTBLOOD 100 // 植物的血量
 #define EATDAMAGE 10 // 僵尸吃植物的伤害
@@ -110,6 +110,7 @@ struct zombie
 	int row; // 僵尸出现的行
 	int isDead; // 僵尸是否死亡
 	int isEat; // 僵尸是否吃植物
+	int restBlood; // 被击打后剩余的血量
 };
 
 struct bullet
@@ -119,6 +120,25 @@ struct bullet
 	int speed; // 豌豆子弹的速度
 	int isExplode; // 豌豆子弹是否爆炸
 	int row; // 子弹出现的行
+};
+
+struct point
+{
+	point(int x, int y)
+		:_x(x)
+		,_y(y)
+	{}
+
+	int _x;
+	int _y;
+};
+
+struct car
+{
+	int x, y; // 小推车位置
+	int isUsed; // 小推车状态
+	int isRun; // 小推车移动状态
+	int row; // 小推车所在行
 };
 
 // 存储阳光数组
@@ -135,11 +155,20 @@ static IMAGE imgPeaShooterBullets; // 豌豆子弹图片
 static IMAGE imgPeaShooterBulletsExploded; // 豌豆子弹爆炸图片
 static IMAGE imgZombieDead[11]; // 僵尸死亡图片帧
 static IMAGE imgZombieEat[21]; // 僵尸吃植物图片帧
+static car cars[CARNUM]; // 存储小推车
+static IMAGE imgShovelSlot; // 存储铁铲框图片
+static IMAGE imgShovelSmall; // 存储铁铲图片
+static IMAGE imgShovelNormal; // 存储铁铲图片
+static int holdingShovel; // 当前是否已经拿到铁铲
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
 // 僵尸动作帧数组
 static IMAGE imgZombieFrameIndex[22];
+// 僵尸站立动作帧数组
+static IMAGE imgZombieStandFrameIndex[11];
+// 准备安放植物图片
+static IMAGE imgReadySetPlants[3];
 
 static plant map[MAPROW][MAPCOL];// 植物地图
 
@@ -150,21 +179,29 @@ int getDelay();
 // 加载音乐
 void StartBackgroundMusic();
 void GamingBackgroundMusic();
+void OverlookingMusic();
 void PlantsCultivate();
 void ClickMenuMusic();
 void ChoosePlantMusic();
+void ChooseShovelMusic();
+void MovePlantMusic();
 void CollectSunshineMusic();
 void FailChoosePlantMusic();
 void ZombiesComingMusic();
 void ZombiesGroanMusic();
 void PeaShooterBulletCollideMusic();
 void ZombieEatingMusic();
+void LawnmowerMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
 void GamingInit();
 // 游戏开始界面
 void GameStartMenu();
+// 俯视全局
+void Overlooking();
+// 展示植物卡牌
+void ShowPlantBoard();
 // 游戏开始运行
 void Gaming();
 // 图片渲染
@@ -172,6 +209,8 @@ void ImageRenderStart();
 void ImageRenderGaming();
 // 鼠标动作
 void MouseActionGaming();
+// 移除植物
+void MovePlants(ExMessage* msg);
 // 更新游戏相关数据
 void UpdateGameData();
 // 更新植物运动
@@ -204,3 +243,9 @@ void UpdatePeaShooterBullets();
 void CheckPeaShooterBulletsCollision();
 // 僵尸碰到植物检测
 void CheckZombieCollision();
+// 创建小推车
+void CreateCar();
+// 更新小推车
+void UpdateCar();
+// 小推车碰撞检测
+void CheckCarCollision();

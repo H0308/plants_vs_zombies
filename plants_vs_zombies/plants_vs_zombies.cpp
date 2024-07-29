@@ -162,7 +162,7 @@ void GamingBackgroundMusic()
 
 	// 开始播放音乐
 	Mix_PlayChannel(-1, sound, -1);
-	// 将音量设置为50%
+	// 将音量设置为80%
 	Mix_VolumeChunk(sound, 80);
 }
 
@@ -268,27 +268,37 @@ void ZombiesGroanMusic()
 		return;
 	}
 
-	static int playCount = 0;
-	playCount = rand() % 100;
-	if (playCount > 10)
+	int playCount = 0;
+	playCount = rand() % 100 + 1;
+	for (int i = 0; i < ZOMBIENUM; i++)
 	{
-		// 开始播放音乐
-		Mix_PlayChannel(-1, sound2, 0);
-	}
-	else if (playCount > 40)
-	{
-		// 开始播放音乐
-		Mix_PlayChannel(-1, sound3, 0);
-	}
-	else if (playCount > 70)
-	{
-		// 开始播放音乐
-		Mix_PlayChannel(-1, sound4, 0);
-	}
-	else
-	{
-		// 开始播放音乐
-		Mix_PlayChannel(-1, sound5, 0);
+		if (zombies[i].isUse)
+		{
+			if (playCount > 10)
+			{
+				// 开始播放音乐
+				Mix_PlayChannel(-1, sound2, 0);
+				Mix_VolumeChunk(sound2, 20);
+			}
+			else if (playCount > 40)
+			{
+				// 开始播放音乐
+				Mix_PlayChannel(-1, sound3, 0);
+				Mix_VolumeChunk(sound3, 20);
+			}
+			else if (playCount > 70)
+			{
+				// 开始播放音乐
+				Mix_PlayChannel(-1, sound4, 0);
+				Mix_VolumeChunk(sound4, 20);
+			}
+			else
+			{
+				// 开始播放音乐
+				Mix_PlayChannel(-1, sound5, 0);
+				Mix_VolumeChunk(sound5, 20);
+			}
+		}
 	}
 }
 
@@ -319,6 +329,62 @@ void ZombieEatingMusic()
 	// 开始播放音乐
 	Mix_PlayChannel(-1, sound, 0);
 	Mix_VolumeChunk(sound, 50);
+}
+
+// 俯视音乐
+void OverlookingMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/overlooking.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
+// 选择铁铲音效
+void ChooseShovelMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/shovel.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
+// 移除植物音效
+void MovePlantMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/plant2.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
+// 小推车启动
+void LawnmowerMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/lawnmower.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
 }
 
 // 初始化菜单场景
@@ -352,6 +418,11 @@ void GamingInit()
 	// 加载植物栏图片到变量
 	loadimage(&imgPlantsBar, "res/bar5.png");
 
+	// 加载铁铲框和铁铲图片
+	loadimage(&imgShovelSlot, "res/Screen/shovelSlot.png");
+	loadimage(&imgShovelSmall, "res/Screen/shovelSmall.png");
+	loadimage(&imgShovelNormal, "res/Screen/shovel.png");
+
 	// 初始化鼠标左键动作
 	status_leftClick = 0;
 	// 起始不存在植物
@@ -370,6 +441,8 @@ void GamingInit()
 	memset(zombies, 0, sizeof(zombies));
 	// 设置豌豆子弹数组的所有值为0
 	memset(peaShooterBullets, 0, sizeof(peaShooterBullets));
+	// 初始化小推车数组的所有值为0
+	memset(cars, 0, sizeof(cars));
 
 	// 加载植物卡片到变量
 	char plants_name[64] = { 0 }; // 通过局部变量记录植物卡牌文件名称
@@ -414,6 +487,7 @@ void GamingInit()
 		loadimage(&imgSun_skyFrameIndex[i], sun_name);
 	}
 
+	// 加载向日葵阳光动画帧
 	char sun[64] = { 0 };
 	for (int i = 0; i < 29; i++)
 	{
@@ -433,7 +507,6 @@ void GamingInit()
 	loadimage(&imgPeaShooterBullets, "res/bullets/bullet_normal.png");
 
 	// 加载豌豆爆炸图片
-
 	loadimage(&imgPeaShooterBulletsExploded, "res/bullets/bullet_blast.png",
 		imgPeaShooterBulletsExploded.getwidth() * 0.2,
 		imgPeaShooterBulletsExploded.getheight() * 0.2,
@@ -456,6 +529,17 @@ void GamingInit()
 		loadimage(&imgZombieEat[i], zombie_eat_name);
 	}
 
+	// 读取站立僵尸到僵尸动作帧数组中
+	char zombie_stand_name[64] = { 0 };
+	for (int i = 0; i < 11; i++)
+	{
+		sprintf(zombie_stand_name, "res/zm_stand/%d.png", i + 1);
+		loadimage(&imgZombieStandFrameIndex[i], zombie_stand_name);
+	}
+
+	// 创建小推车
+	CreateCar();
+
 	// 设置字体
 	LOGFONT font;
 	gettextstyle(&font);
@@ -475,17 +559,21 @@ void ImageRenderGaming()
 	BeginBatchDraw();
 
 	// 渲染背景
-	putimage(0, 0, &imgBackground);
+	putimage(-112, 0, &imgBackground);
 
 	// 渲染植物栏
-	putimageForPNG(NULL, 250, 0, &imgPlantsBar, BLACK);
+	putimageForPNG(NULL, 250 - 112, 0, &imgPlantsBar, BLACK);
+
+	// 渲染铁铲框和铁铲
+	putimageForPNG(NULL, 750, 0, &imgShovelSlot, BLACK);
+	putimagePNG(756, 6, &imgShovelSmall);
 
 	// 渲染植物
 	int x = 0;// 定义x坐标
 	int y = 6; // 定义y坐标
 	for (int i = 0; i < PlantsCount; i++)
 	{
-		x = 340 + i * 65;
+		x = 340 - 112 + i * 65;
 		putimageForPNG(NULL, x, y, &imgPlants[i], BLACK);
 	}
 
@@ -498,7 +586,7 @@ void ImageRenderGaming()
 			if (map[i][j].type > -1 && map[i][j].eaten == 0)
 			{
 				// 计算出x和y坐标作为渲染位置
-				int x = 257 + j * 81;
+				int x = 257 - 112 + j * 81;
 				int y = 179 + i * 102;
 				putimageForPNG(NULL, x, y, imgPlantsMove[map[i][j].type][map[i][j].frameIndex], BLACK);
 			}
@@ -542,16 +630,23 @@ void ImageRenderGaming()
 		}
 	}
 
-	// 渲染小推车
-	x = 195;
+	// 渲染起始状态的小推车
+	x = 83;
 	y = 0;
 	for (int i = 0; i < CARNUM; i++)
 	{
-		y = 210 + i * 100;
-		putimageForPNG(NULL, x, y, &imgCar[i], BLACK);
+		if (cars[i].isUsed == 0)
+		{
+			y = 210 + i * 100;
+			putimageForPNG(NULL, x, y, &imgCar[i], BLACK);
+		}
+		else if (cars[i].isRun == 0 && cars[i].isUsed)
+		{
+			putimageForPNG(NULL, cars[i].x, cars[i].y, &imgCar[i], BLACK);
+		}
 	}
 
-	// 渲染拖拽图，本步骤在种植步骤后实现拖拽图置于已经种植的植物图上方
+	// 渲染植物拖拽图，本步骤在种植步骤后实现拖拽图置于已经种植的植物图上方
 	if (curPlant >= 0)
 	{
 		IMAGE* dragged = imgPlantsMove[curPlant][0];// 取到动作帧照片的第一张
@@ -559,10 +654,18 @@ void ImageRenderGaming()
 			curY - dragged->getheight() / 2, dragged, BLACK);
 	}
 
+	// 渲染铁铲拖拽图
+	if (holdingShovel == 1)
+	{
+		IMAGE* dragged = &imgShovelNormal;
+		putimagePNG(curX - dragged->getwidth() / 2,
+			curY - dragged->getheight() / 2, dragged);
+	}
+
 	// 设置字体显示位置
 	char scoreText[5];
 	sprintf(scoreText, "%d", sunshineScore);
-	outtextxy(285, 67, scoreText);
+	outtextxy(285 - 112, 67, scoreText);
 
 	// 渲染阳光
 	for (int i = 0; i < SUNSHINENUM; i++)
@@ -605,9 +708,9 @@ void MouseActionGaming()
 		// 鼠标左键单击
 		if (msg.message == WM_LBUTTONDOWN)
 		{
-			if (msg.x >= 340 && msg.x <= 340 + PlantsCount * 65 && msg.y <= 96) // 选植物
+			if (msg.x >= 340 - 112 && msg.x <= 340 - 112 + PlantsCount * 65 && msg.y <= 96) // 选植物
 			{
-				int index = (msg.x - 340) / 66;// 使用66处理比较边缘的位置
+				int index = (msg.x - (340 - 112)) / 66;// 使用66处理比较边缘的位置
 				//std::cout << index << std::endl;
 				status_leftClick = 1;// 左键单击后置为1
 				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
@@ -616,6 +719,14 @@ void MouseActionGaming()
 
 				// 如果当前拥有的阳光数量大于点击植物的需求量，则选中，否则无法选择
 				ChoosePlant(index);
+			}
+			else if (msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52) // 选择铁铲
+			{
+				curX = msg.x;
+				curY = msg.y;
+				ChooseShovelMusic();
+				status_leftClick = 1;
+				holdingShovel = 1;
 			}
 			else // 收集阳光
 			{
@@ -629,11 +740,11 @@ void MouseActionGaming()
 		}
 		else if (msg.message == WM_LBUTTONUP && curPlant > -1)// 鼠标左键弹起，并且判定有植物时才进入，否则不触发对应音效
 		{
-			if (msg.x >= 257 && msg.x <= 985 && msg.y >= 179 && msg.y <= 465)
+			if (msg.x >= 257 - 112 && msg.x <= 985 && msg.y >= 179 && msg.y <= 465)
 			{
 				// 通过x和y计算行和列
 				int row = (msg.y - 179) / 102;
-				int col = (msg.x - 257) / 81;
+				int col = (msg.x - (257 - 112)) / 81;
 				//std::cout << col << ", " << row << std::endl;
 
 				// 设置指定位置的植物类型和动作帧
@@ -655,6 +766,55 @@ void MouseActionGaming()
 				// 将当前植物设置为-1
 				curPlant = -1;
 			}
+		}
+		else if (msg.message == WM_LBUTTONUP && msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52) // 放下铁铲
+		{
+			status_leftClick = 0;
+			holdingShovel = 0;
+		}
+		else if (msg.message == WM_LBUTTONUP && holdingShovel)
+		{
+			MovePlants(&msg);
+		}
+	}
+}
+
+// 铁铲移除植物
+void MovePlants(ExMessage* msg)
+{
+	// 判断当前铁铲位置是否有植物
+	int row = (msg->y - 179) / 102;
+	int col = (msg->x - 145) / 81;
+	if (msg->message == WM_LBUTTONDOWN)
+	{
+		curX = msg->x;
+		curY = msg->y;
+	}
+	else if (msg->message == WM_LBUTTONUP)
+	{
+		if (map[row][col].type > -1)
+		{
+			map[row][col].type = -1;
+			MovePlantMusic();
+			
+		}
+	}
+
+	// 初始化所有子弹时，将全局所有子弹的爆炸状态全部置为0，防止出现部分子弹碰撞完后卡在画面中
+	for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
+	{
+		peaShooterBullets[k].isExplode = 0;
+	}
+
+	// 僵尸恢复样式
+	for (int k = 0; k < ZOMBIENUM; k++)
+	{
+		// 找到还在吃但是植物已经没了的僵尸恢复其状态
+		if (zombies[k].isEat && map[row][col].type == -1)
+		{
+			zombies[k].frameIndex = 0;
+			zombies[k].speed = 1;
+			zombies[k].isEat = 0;
 		}
 	}
 }
@@ -702,7 +862,7 @@ void CreateSunshineFromSky()
 		if (i < SUNSHINENUM)
 		{
 			// 更改新阳光的数据
-			sunshine_sky[i].x = 260 + rand() % (900 - 260); // [260, 899]
+			sunshine_sky[i].x = 260 - 112 + 100 + rand() % (900 - 260); // [248, 899]
 			sunshine_sky[i].y = 170;
 			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 100; // [200, 500]
 			sunshine_sky[i].frameIndex = 0; // 从第一张帧照片开始
@@ -745,7 +905,7 @@ void UpdateSunshineFromSky()
 		}
 		else if (sunshine_sky[i].isClick)
 		{
-			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
+			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - (262 - 112)));
 			sunshine_sky[i].xoffset = 60 * cos(angle);
 			sunshine_sky[i].yoffset = 60 * sin(angle);
 
@@ -753,7 +913,7 @@ void UpdateSunshineFromSky()
 			sunshine_sky[i].x -= sunshine_sky[i].xoffset;
 			sunshine_sky[i].y -= sunshine_sky[i].yoffset;
 
-			if (sunshine_sky[i].x <= 262 || sunshine_sky[i].y <= 0)
+			if (sunshine_sky[i].x <= 262 - 112 || sunshine_sky[i].y <= 0)
 			{
 				sunshine_sky[i].isClick = 0;
 				sunshineScore += PERSUNSHINE;
@@ -802,7 +962,7 @@ void CreateSunshineFromSunflower()
 				}
 			}
 
-			if(row != lastRow || col != lastCol)
+			if (row != lastRow || col != lastCol)
 			{
 				lastRow = row;
 				lastCol = col;
@@ -818,7 +978,7 @@ void CreateSunshineFromSunflower()
 			i++;
 		}
 
-		int x = 257 + col * 81;
+		int x = 257 - 112 + col * 81;
 		int y = 179 + row * 102;
 
 		// 确定位置创建阳光
@@ -892,7 +1052,7 @@ void UpdateSunshineFromSunflower()
 		}
 		else if (sunshine_sunflower[i].isClick)
 		{
-			double angle = atan(sunshine_sunflower[i].start_y / (sunshine_sunflower[i].start_x - 262));
+			double angle = atan(sunshine_sunflower[i].start_y / (sunshine_sunflower[i].start_x - (262 - 112)));
 			sunshine_sunflower[i].xoffset = 60 * cos(angle);
 			sunshine_sunflower[i].yoffset = 60 * sin(angle);
 
@@ -900,7 +1060,7 @@ void UpdateSunshineFromSunflower()
 			sunshine_sunflower[i].start_x -= sunshine_sunflower[i].xoffset;
 			sunshine_sunflower[i].start_y -= sunshine_sunflower[i].yoffset;
 
-			if (sunshine_sunflower[i].start_x <= 262 || sunshine_sunflower[i].start_y <= 0)
+			if (sunshine_sunflower[i].start_x <= 262 - 112 || sunshine_sunflower[i].start_y <= 0)
 			{
 				sunshine_sunflower[i].isClick = 0;
 				sunshineScore += PERSUNSHINE;
@@ -934,7 +1094,7 @@ void CollectSunshineFromSky(ExMessage* msg)
 		else if (sunshine_sky[i].isClick)
 		{
 			// 计算斜率θ
-			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - 262));
+			double angle = atan(sunshine_sky[i].y / (sunshine_sky[i].x - (262 - 112)));
 			sunshine_sky[i].xoffset = 60 * cos(angle);
 			sunshine_sky[i].yoffset = 60 * sin(angle);
 		}
@@ -966,7 +1126,7 @@ void CollectSunshineFromSunFlower(ExMessage* msg)
 		else if (sunshine_sunflower[i].isClick)
 		{
 			// 计算斜率θ
-			double angle = atan(sunshine_sunflower[i].start_x / (sunshine_sunflower[i].start_x - 262));
+			double angle = atan(sunshine_sunflower[i].start_x / (sunshine_sunflower[i].start_x - (262 - 112)));
 			sunshine_sunflower[i].xoffset = 60 * cos(angle);
 			sunshine_sunflower[i].yoffset = 60 * sin(angle);
 		}
@@ -1036,17 +1196,18 @@ void CreateZombies()
 		if (i < ZOMBIENUM)
 		{
 			// 更新僵尸数据
-			zombies[i].x = 900;
+			zombies[i].x = 800;
 			zombies[i].row = rand() % 3;// 初始化僵尸所在行
 			zombies[i].y = 170 + (1 + zombies[i].row) * 100;
 			zombies[i].frameIndex = 0;
 			zombies[i].isUse = 1;
 			zombies[i].speed = 1;
 			// 设置僵尸血量
-			zombies[i].blood = 100;
+			zombies[i].blood = 150;
 			// 设置僵尸起始状态
 			zombies[i].isDead = 0;
 			zombies[i].isEat = 0;
+			zombies[i].restBlood = zombies[i].blood;
 			// 标志第一个僵尸诞生
 			comingSign++;
 		}
@@ -1094,11 +1255,13 @@ void UpdateZombies()
 						zombies[i].frameIndex = (zombies[i].frameIndex + 1) % 21;
 					}
 					// 僵尸到达草坪左边界
-					if (zombies[i].x <= 150)
+					if (zombies[i].x <= 150 - 112)
 					{
-						// 判断是否有小推车，有则移动小推车，没有则游戏结束
-						// 小推车暂未实现
-						exit(0);// 游戏结束
+						// 没有小推车游戏结束
+						if (cars[zombies[i].row].isUsed)
+						{
+							exit(0);
+						}
 					}
 				}
 				else if (zombies[i].isDead)
@@ -1135,7 +1298,7 @@ void CreatePeaShooterBullets()
 		for (int j = 0; j < MAPCOL; j++)
 		{
 			// 找到豌豆射手的位置并且确定豌豆射手的位置与僵尸的位置在同一行
-			if (map[i][j].type == peaShooter.type && zombieRow[i] && map[i][j].eaten == 0)
+			if (map[i][j].type == peaShooter.type && zombieRow[i] && zombies[i].x <= PEASHOOTERSAFETYLINE && map[i][j].eaten == 0)
 			{
 				// 控制执行次数
 				static int counts[MAPROW] = { 0 }; // 每行的计数器
@@ -1152,7 +1315,7 @@ void CreatePeaShooterBullets()
 
 					// 创建当前行的豌豆子弹
 					// 根据植物种植位置判断子弹出现位置
-					int x = 257 + j * 81;
+					int x = 257 - 112 + j * 81;
 					int y = 179 + i * 102;
 					peaShooterBullets[k].x = x + imgPlantsMove[Pea_Shooter][0]->getwidth() - 15;
 					peaShooterBullets[k].y = y + 5;
@@ -1206,13 +1369,14 @@ void CheckPeaShooterBulletsCollision()
 				if (zombies[j].isUse)
 				{
 					// 如果僵尸和子弹是同一行，则判断是否已经抵达碰撞范围
-					if (peaShooterBullets[i].row == zombies[j].row)
+					if (peaShooterBullets[i].row == zombies[j].row && zombies[j].x <= PEASHOOTERSAFETYLINE)
 					{
 						if (peaShooterBullets[i].x >= zombies[j].x + 60 && peaShooterBullets[i].x <= zombies[j].x + 110)
 						{
 							// 子弹碰撞
 							// 僵尸血量减少
 							zombies[j].blood -= PEASHOOTERBULLETDAMAGE;
+							zombies[j].restBlood = zombies[j].blood;
 							// printf("%d %d %d\n", peaShooterBullets[i].row, zombies[j].row, zombies[j].blood);
 							peaShooterBullets[i].isExplode = 1;
 							peaShooterBullets[i].speed = 0;
@@ -1260,8 +1424,8 @@ void CheckZombieCollision()
 			if (map[row][j].type > -1 && map[row][j].eaten == 0)
 			{
 				// 左侧植物的坐标
-				int left = 257 + j * 81 + 10;
-				int right = 257 + j * 81 + 60;
+				int left = 257 - 112 + j * 81 + 10;
+				int right = 257 - 112 + j * 81 + 60;
 				// 如果僵尸还活着就吃植物
 				if (zombies[i].isDead == 0 && zombies[i].x + 80 >= left && zombies[i].x + 80 <= right)
 				{
@@ -1314,6 +1478,79 @@ void CheckZombieCollision()
 							peaShooterBullets[k].isExplode = 0;
 						}
 					}
+				}
+			}
+		}
+	}
+}
+
+// 创建小推车
+void CreateCar()
+{
+	for (int i = 0; i < CARNUM; i++)
+	{
+		if (cars[i].isUsed == 0 && cars[i].isRun == 0)
+		{
+			cars[i].x = 83;
+			cars[i].y = 210 + i * 100;
+			cars[i].isUsed = 0;
+			cars[i].row = i;
+			cars[i].isRun = 0;
+		}
+		else
+		{
+			continue;
+		}
+	}
+}
+
+// 更新小推车
+void UpdateCar()
+{
+	static int count[3] = { 0 };
+	// 当僵尸触及到小推车的安全位置时更新小推车
+	for (int i = 0; i < CARNUM; i++)
+	{
+		CheckCarCollision();
+		// 移动小推车
+		if (cars[i].isRun == 0 && cars[i].isUsed)
+		{
+			count[i]++;
+			if (count[i] == 1)
+			{
+				LawnmowerMusic();
+			}
+			cars[i].x += 50;
+			// 检查小推车的碰撞行为
+			// 如果小推车越过安全线，则销毁
+			if (cars[i].x > PEASHOOTERSAFETYLINE + 20)
+			{
+				cars[i].isRun = 1;
+			}
+		}
+	}
+}
+
+// 小推车碰撞检测
+void CheckCarCollision()
+{
+	int row = 0;
+	for (int i = 0; i < CARNUM; i++)
+	{
+		// 找到第一个碰到小推车的僵尸
+		for (int j = 0; j < ZOMBIENUM; j++)
+		{
+			if (zombies[j].isUse && cars[i].isRun == 0 && zombies[j].row == cars[i].row && zombies[j].x <= cars[i].x + 10)
+			{
+				// 修改小推车的属性
+				zombies[j].blood -= zombies[j].restBlood;
+				cars[i].isUsed = 1;
+				if (zombies[j].blood == 0)
+				{
+					// 修改僵尸的属性
+					zombies[j].isDead = 1;
+					zombies[j].speed = 0;
+					zombies[j].frameIndex = 0;
 				}
 			}
 		}
@@ -1396,6 +1633,131 @@ void UpdateGameData()
 	CreatePeaShooterBullets();
 	// 更新豌豆子弹
 	UpdatePeaShooterBullets();
+	// 更新小推车
+	UpdateCar();
+}
+
+// 俯视全局
+void Overlooking()
+{
+	// 初始化SDL
+	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		return;
+	}
+
+	// 初始化Mixer子系统
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+	OverlookingMusic();
+
+	// 背景边界
+	int min = -500;
+	// 创建僵尸位置
+	point position[9] = {
+		{550, 80}, {530, 160}, {630, 170}, {530, 200}, {515, 270}, {565, 370},
+		{605, 340}, {705, 280}, {690, 340}
+	};
+
+	// 使每一个僵尸的动作帧随机
+	int index[9] = { 0 };
+	int count = 0;
+	for (int i = 0; i < 9; i++)
+	{
+		index[i] = rand() % 11;
+	}
+
+	for (int i = 0; i >= min; i -= 2)
+	{
+		BeginBatchDraw();
+		// 移动背景图片
+		putimage(i, 0, &imgBackground);
+
+		count++;
+		// 渲染僵尸动作
+		for (int j = 0; j < 9; j++)
+		{
+			putimagePNG(position[j]._x - min + i, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			if (count >= 10)
+			{
+				index[j] = (index[j] + 1) % 11;
+			}
+		}
+		if (count >= 10)
+		{
+			count = 0;
+		}
+		EndBatchDraw();
+		Sleep(10);
+	}
+
+	// 停留
+	for (int i = 0; i < 100; i++)
+	{
+		BeginBatchDraw();
+
+		putimage(min, 0, &imgBackground);
+
+		for (int j = 0; j < 9; j++)
+		{
+			putimagePNG(position[j]._x, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			index[j] = (index[j] + 1) % 11;
+		}
+		Sleep(50);
+		EndBatchDraw();
+	}
+
+	// 回归到指定位置
+	count = 0;
+	for (int i = min; i <= -112; i += 2)
+	{
+		BeginBatchDraw();
+
+		putimage(i, 0, &imgBackground);
+		for (int j = 0; j < 9; j++)
+		{
+			putimagePNG(position[j]._x - min + i, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			if (count >= 10)
+			{
+				index[j] = (index[j] + 1) % 11;
+			}
+		}
+		if (count >= 10)
+		{
+			count = 0;
+		}
+
+		Sleep(10);
+		EndBatchDraw();
+	}
+
+	Mix_CloseAudio();
+}
+
+// 展示植物卡牌
+void ShowPlantBoard()
+{
+	for (int i = -imgPlantsBar.getheight(); i <= 0; i++)
+	{
+		BeginBatchDraw();
+
+		putimage(-112, 0, &imgBackground);
+
+		putimageForPNG(NULL, 250 - 112, i, &imgPlantsBar, BLACK);
+		putimageForPNG(NULL, 750, i, &imgShovelSlot, BLACK);
+		int x = 0;// 定义x坐标
+		for (int j = 0; j < PlantsCount; j++)
+		{
+			x = 340 - 112 + j * 65;
+			putimageForPNG(NULL, x, 6 + i, &imgPlants[i], BLACK);
+			putimagePNG(756, 6 + i, &imgShovelSmall);
+		}
+
+		EndBatchDraw();
+		Sleep(10);
+	}
 }
 
 // 游戏进行
