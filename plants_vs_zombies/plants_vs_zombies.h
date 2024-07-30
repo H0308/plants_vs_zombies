@@ -13,7 +13,7 @@
 #define CARNUM 3 // 小推车的个数
 #define SUNSHINENUM 10 // 产生阳光的个数
 #define PERSUNSHINE 25 // 一个阳光的增值
-#define ZOMBIENUM 20 // 僵尸的数量
+#define ZOMBIENUM 20 // 生产僵尸的数量
 #define SUNSHINESPEED 100 // 阳光飞行速度
 #define PEASHOOTERBULLETNUM 40 //豌豆射手子弹个数
 #define PEASHOOTERSAFETYLINE 930 // 豌豆射手攻击警戒线的位置
@@ -22,6 +22,7 @@
 #define EATDAMAGE 10 // 僵尸吃植物的伤害
 #define GRAVITY 7 // 重力加速度
 #define PI 3.14 // 圆周率
+#define ZOMBIECOUNT 15 // 一局僵尸的数量
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
@@ -169,8 +170,18 @@ static IMAGE imgZombieFrameIndex[22];
 static IMAGE imgZombieStandFrameIndex[11];
 // 准备安放植物图片
 static IMAGE imgReadySetPlants[3];
-
 static plant map[MAPROW][MAPCOL];// 植物地图
+
+enum
+{
+	Success, // 游戏胜利
+	Ongoing, // 游戏进行
+	Fail // 游戏结束
+};
+
+static int ZombieAppeared; // 游戏对局出现的僵尸个数
+static int GameStatus; // 游戏状态
+static int ZombieKilled; // 杀死的僵尸个数
 
 // 处理PNG图片黑边问题
 void putimageForPNG(IMAGE* dstimg, int x, int y, IMAGE* srcimg, UINT transparentcolor);
@@ -192,6 +203,8 @@ void ZombiesGroanMusic();
 void PeaShooterBulletCollideMusic();
 void ZombieEatingMusic();
 void LawnmowerMusic();
+void SuccessMusic();
+void FailMusic();
 // 初始化菜单场景
 void StartInit();
 // 初始化游戏场景
@@ -203,7 +216,7 @@ void Overlooking();
 // 展示植物卡牌
 void ShowPlantBoard();
 // 游戏开始运行
-void Gaming();
+int Gaming();
 // 图片渲染
 void ImageRenderStart();
 void ImageRenderGaming();
@@ -249,3 +262,5 @@ void CreateCar();
 void UpdateCar();
 // 小推车碰撞检测
 void CheckCarCollision();
+// 检查游戏状态
+int CheckGameStatus();

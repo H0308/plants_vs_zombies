@@ -387,6 +387,34 @@ void LawnmowerMusic()
 	Mix_PlayChannel(-1, sound, 0);
 }
 
+// 胜利音乐
+void SuccessMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/success.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
+// 失败音乐
+void FailMusic()
+{
+	// 加载音乐文件
+	Mix_Chunk* sound = Mix_LoadWAV("res/music/lose.wav");
+	if (!sound) {
+		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		return;
+	}
+
+	// 开始播放音乐
+	Mix_PlayChannel(-1, sound, 0);
+}
+
 // 初始化菜单场景
 void StartInit()
 {
@@ -540,6 +568,11 @@ void GamingInit()
 	// 创建小推车
 	CreateCar();
 
+	// 初始化游戏状态控制变量
+	ZombieAppeared = 0;
+	ZombieKilled = 0;
+	GameStatus = Ongoing;
+
 	// 设置字体
 	LOGFONT font;
 	gettextstyle(&font);
@@ -566,7 +599,11 @@ void ImageRenderGaming()
 
 	// 渲染铁铲框和铁铲
 	putimageForPNG(NULL, 750, 0, &imgShovelSlot, BLACK);
-	putimagePNG(756, 6, &imgShovelSmall);
+	// 当铁铲没有被点击时渲染铁铲框内的铁铲
+	if (holdingShovel == 0)
+	{
+		putimagePNG(756, 6, &imgShovelSmall);
+	}
 
 	// 渲染植物
 	int x = 0;// 定义x坐标
@@ -1178,6 +1215,11 @@ void ChoosePlant(int index)
 // 创建僵尸
 void CreateZombies()
 {
+	// 当已经出现过的僵尸（包括死亡的）等于最大量则不创建僵尸
+	if (ZombieAppeared == ZOMBIECOUNT)
+	{
+		return;
+	}
 	static int frequent = 150; // 控制僵尸创建频率
 	static int count = 0; // 控制执行次数
 	static int comingSign = 0; // 标志第一个僵尸产生
@@ -1208,6 +1250,8 @@ void CreateZombies()
 			zombies[i].isDead = 0;
 			zombies[i].isEat = 0;
 			zombies[i].restBlood = zombies[i].blood;
+			// 僵尸创建个数改变
+			ZombieAppeared++;
 			// 标志第一个僵尸诞生
 			comingSign++;
 		}
@@ -1260,7 +1304,8 @@ void UpdateZombies()
 						// 没有小推车游戏结束
 						if (cars[zombies[i].row].isUsed)
 						{
-							exit(0);
+							GameStatus = Fail;
+							//exit(0);
 						}
 					}
 				}
@@ -1270,6 +1315,13 @@ void UpdateZombies()
 					if (zombies[i].frameIndex >= 11)
 					{
 						zombies[i].isUse = 0;
+						// 僵尸死亡计数
+						ZombieKilled++;
+						// 所有僵尸死亡游戏胜利
+						if (ZombieKilled == ZOMBIECOUNT)
+						{
+							GameStatus = Success;
+						}
 					}
 				}
 			}
@@ -1520,8 +1572,7 @@ void UpdateCar()
 			{
 				LawnmowerMusic();
 			}
-			cars[i].x += 50;
-			// 检查小推车的碰撞行为
+			cars[i].x += 50;			// 检查小推车的碰撞行为
 			// 如果小推车越过安全线，则销毁
 			if (cars[i].x > PEASHOOTERSAFETYLINE + 20)
 			{
@@ -1760,19 +1811,39 @@ void ShowPlantBoard()
 	}
 }
 
+// 检查游戏状态
+int CheckGameStatus()
+{
+	if (GameStatus == Success)
+	{
+		//Sleep(5000);
+		// 直接加载图片并显示
+		loadimage(NULL, "res/gameWin.png");
+		return 1;
+	}
+	else if (GameStatus == Fail)
+	{
+		//Sleep(5000);
+		loadimage(NULL, "res/gameFail.png");
+		return 1;
+	}
+
+	return 0;
+}
+
 // 游戏进行
-void Gaming()
+int Gaming()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
 		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
-		return;
+		return 0;
 	}
 
 	// 初始化Mixer子系统
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
 		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
-		return;
+		return 0;
 	}
 
 	// 加载游戏背景音乐
@@ -1793,9 +1864,16 @@ void Gaming()
 		{
 			UpdateGameData();
 			time = 0;
+			// 检查游戏状态
+			if (CheckGameStatus())
+			{
+				break;
+			}
 		}
 	}
 
 	Mix_CloseAudio();
 	Mix_CloseAudio();
+
+	return GameStatus;
 }
