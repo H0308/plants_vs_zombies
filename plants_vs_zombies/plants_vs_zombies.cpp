@@ -456,7 +456,7 @@ void GamingInit()
 	// 起始不存在植物
 	curPlant = -1;
 	// 阳光初始值
-	sunshineScore = 50;
+	sunshineScore = 600;
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
@@ -684,7 +684,7 @@ void ImageRenderGaming()
 	}
 
 	// 渲染植物拖拽图，本步骤在种植步骤后实现拖拽图置于已经种植的植物图上方
-	if (curPlant >= 0)
+	if (curPlant >= 0 && holdingPlants == 1)
 	{
 		IMAGE* dragged = imgPlantsMove[curPlant][0];// 取到动作帧照片的第一张
 		putimageForPNG(NULL, curX - dragged->getwidth() / 2,
@@ -742,19 +742,18 @@ void MouseActionGaming()
 	// 如果鼠标有动作，则开始处理，否则不处理
 	if (peekmessage(&msg))
 	{
+		int index = -1;
 		// 鼠标左键单击
 		if (msg.message == WM_LBUTTONDOWN)
 		{
-			if (msg.x >= 340 - 112 && msg.x <= 340 - 112 + PlantsCount * 65 && msg.y <= 96) // 选植物
+			if (holdingPlants == 0 && holdingShovel == 0 && msg.x >= 340 - 112 && msg.x <= 340 - 112 + PlantsCount * 65 && msg.y <= 96) // 选植物
 			{
-				int index = (msg.x - (340 - 112)) / 66;// 使用66处理比较边缘的位置
+				index = (msg.x - (340 - 112)) / 66;// 使用66处理比较边缘的位置
 				//std::cout << index << std::endl;
 				status_leftClick = 1;// 左键单击后置为1
 				// 记录点击的位置，解决植物种植完毕后出现的植物图片滞后现象
 				curX = msg.x;
 				curY = msg.y;
-
-				// 如果当前拥有的阳光数量大于点击植物的需求量，则选中，否则无法选择
 				ChoosePlant(index);
 			}
 			else if (msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52) // 选择铁铲
@@ -765,53 +764,71 @@ void MouseActionGaming()
 				status_leftClick = 1;
 				holdingShovel = 1;
 			}
-			else // 收集阳光
+			else if(curPlant == -1 && holdingShovel == 0 && holdingPlants == 0)// 收集阳光，有植物时不可以收集阳光
 			{
 				CollectSunshine(&msg);
 			}
 		}
-		else if (msg.message == WM_MOUSEMOVE && status_leftClick) // 鼠标拖拽
+		else if (msg.message == WM_MOUSEMOVE && status_leftClick && holdingPlants) // 鼠标拖拽
 		{
 			curX = msg.x;
 			curY = msg.y;
 		}
-		else if (msg.message == WM_LBUTTONUP && curPlant > -1)// 鼠标左键弹起，并且判定有植物时才进入，否则不触发对应音效
+		else if (msg.message == WM_LBUTTONUP && curPlant > -1 && holdingPlants && msg.x >= 257 - 112 && msg.x <= 985 && msg.y >= 179 && msg.y <= 465)// 鼠标左键弹起，并且判定有植物时才进入，否则不触发对应音效
 		{
-			if (msg.x >= 257 - 112 && msg.x <= 985 && msg.y >= 179 && msg.y <= 465)
+			// 通过x和y计算行和列
+			int row = (msg.y - 179) / 102;
+			int col = (msg.x - (257 - 112)) / 81;
+			//std::cout << col << ", " << row << std::endl;
+
+			// 设置指定位置的植物类型和动作帧
+			if (map[row][col].type == -1)
 			{
-				// 通过x和y计算行和列
-				int row = (msg.y - 179) / 102;
-				int col = (msg.x - (257 - 112)) / 81;
-				//std::cout << col << ", " << row << std::endl;
-
-				// 设置指定位置的植物类型和动作帧
-				if (map[row][col].type == -1)
-				{
-					map[row][col].type = curPlant;
-					map[row][col].frameIndex = 0;
-					map[row][col].x = col;
-					map[row][col].y = row;
-					// 设置植物血量
-					map[row][col].blood = PLANTBLOOD;
-					// 起始植物未被吃掉
-					map[row][col].eaten = 0;
-					PlantsCultivate();
-				}
-
-				// 设置鼠标状态为0
-				status_leftClick = 0;
-				// 将当前植物设置为-1
-				curPlant = -1;
+				map[row][col].type = curPlant;
+				map[row][col].frameIndex = 0;
+				map[row][col].x = col;
+				map[row][col].y = row;
+				// 设置植物血量
+				map[row][col].blood = PLANTBLOOD;
+				// 起始植物未被吃掉
+				map[row][col].eaten = 0;
+				PlantsCultivate();
 			}
+
+			// 设置鼠标状态为0
+			status_leftClick = 0;
+			holdingPlants = 0;
+			// 将当前植物设置为-1
+			curPlant = -1;
 		}
-		else if (msg.message == WM_LBUTTONUP && msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52) // 放下铁铲
+		else if (msg.message == WM_LBUTTONUP && msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52 && holdingShovel) // 放下铁铲
 		{
 			status_leftClick = 0;
 			holdingShovel = 0;
 		}
-		else if (msg.message == WM_LBUTTONUP && holdingShovel)
+		else if (msg.message == WM_LBUTTONUP && holdingShovel && curPlant == -1)
 		{
 			MovePlants(&msg);
+		}
+		else if (msg.message == WM_LBUTTONUP && msg.x >= 340 - 112 && msg.x <= 340 - 112 + PlantsCount * 65 && msg.y <= 96 && holdingPlants) // 取消种植植物
+		{
+			//std::cout << index << std::endl;
+			index = (msg.x - (340 - 112)) / 66;
+			if (index == peaShooter.type)
+			{
+				index = -1;
+				curPlant = index;
+				sunshineScore += peaShooter.sunshine;
+			}
+			else if (index == sunflower.type)
+			{
+				index = -1;
+				curPlant = index;
+				sunshineScore += sunflower.sunshine;
+			}
+
+			status_leftClick = 0;
+			holdingPlants = 0;
 		}
 	}
 }
@@ -833,7 +850,7 @@ void MovePlants(ExMessage* msg)
 		{
 			map[row][col].type = -1;
 			MovePlantMusic();
-			
+
 		}
 	}
 
@@ -1018,8 +1035,8 @@ void CreateSunshineFromSunflower()
 		int x = 257 - 112 + col * 81;
 		int y = 179 + row * 102;
 
-		// 确定位置创建阳光
-		if (row < MAPROW && col < MAPCOL && map[row][col].type == sunflower.type && i < SUNSHINENUM)
+		// 确定位置创建阳光，并且如果向日葵被吃了就不能创建阳光
+		if (row < MAPROW && col < MAPCOL && map[row][col].type == sunflower.type && i < SUNSHINENUM && map[row][col].eaten == 0)
 		{
 			// 初始化起始位置和终点位置
 			double startX = x + 10;
@@ -1210,6 +1227,8 @@ void ChoosePlant(int index)
 			FailChoosePlantMusic();
 		}
 	}
+
+	holdingPlants = 1;
 }
 
 // 创建僵尸
@@ -1231,7 +1250,7 @@ void CreateZombies()
 		// 最后一波攻势
 		if (ZombieAppeared >= (ZOMBIECOUNT * 3 / 5))
 		{
-			frequent = 0;
+			frequent = 50;
 		}
 		// 找到未使用的僵尸
 		int i = 0;
@@ -1317,7 +1336,7 @@ void UpdateZombies()
 				else if (zombies[i].isDead)
 				{
 					zombies[i].frameIndex++;
-					if (zombies[i].frameIndex >= 11)
+					if (zombies[i].frameIndex == 11)
 					{
 						zombies[i].isUse = 0;
 						// 僵尸死亡计数
@@ -1380,13 +1399,14 @@ void CreatePeaShooterBullets()
 					// 初始化子弹其余变量
 					peaShooterBullets[k].row = i; // 豌豆所在行即豌豆子弹所在行
 					peaShooterBullets[k].isUse = 1;
-					// 初始化所有子弹时，将全局所有子弹的爆炸状态全部置为0，防止出现部分子弹碰撞完后卡在画面中
-					for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
-					{
-						peaShooterBullets[k].isExplode = 0;
-					}
+
 					peaShooterBullets[k].speed = 30;
 				}
+			}
+			// 初始化所有子弹时，将全局所有子弹的爆炸状态全部置为0，防止出现部分子弹碰撞完后卡在画面中
+			for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
+			{
+				peaShooterBullets[k].isExplode = 0;
 			}
 		}
 	}
@@ -1516,6 +1536,8 @@ void CheckZombieCollision()
 					{
 						// 植物被吃掉
 						map[row][j].eaten = 1;
+						// 植物所在位置清空
+						map[row][j].type = -1;
 						// 僵尸恢复样式
 						for (int k = 0; k < ZOMBIENUM; k++)
 						{
@@ -1529,11 +1551,6 @@ void CheckZombieCollision()
 						}
 						// 将帧更新归零
 						frameMove = 0;
-						// 清空所有已发射的子弹防止豌豆死亡子弹停留
-						for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
-						{
-							peaShooterBullets[k].isExplode = 0;
-						}
 					}
 				}
 			}
@@ -1681,14 +1698,14 @@ void UpdateGameData()
 	CreateSunshineFromSunflower();
 	// 更新阳光
 	UpdateSunshineFromSunflower();
-	// 创建僵尸
-	CreateZombies();
-	// 僵尸移动
-	UpdateZombies();
 	// 创建豌豆子弹
 	CreatePeaShooterBullets();
 	// 更新豌豆子弹
 	UpdatePeaShooterBullets();
+	// 创建僵尸
+	CreateZombies();
+	// 僵尸移动
+	UpdateZombies();
 	// 更新小推车
 	UpdateCar();
 }

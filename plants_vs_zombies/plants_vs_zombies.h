@@ -161,6 +161,7 @@ static IMAGE imgShovelSlot; // 存储铁铲框图片
 static IMAGE imgShovelSmall; // 存储铁铲图片
 static IMAGE imgShovelNormal; // 存储铁铲图片
 static int holdingShovel; // 当前是否已经拿到铁铲
+static int holdingPlants; // 当前是否持有植物
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
