@@ -456,7 +456,7 @@ void GamingInit()
 	// 起始不存在植物
 	curPlant = -1;
 	// 阳光初始值
-	sunshineScore = 600;
+	sunshineScore = 50;
 
 	// 设置拖拽数组中的值为NULL
 	memset(imgPlantsMove, NULL, sizeof(imgPlantsMove));
@@ -756,7 +756,7 @@ void MouseActionGaming()
 				curY = msg.y;
 				ChoosePlant(index);
 			}
-			else if (msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52) // 选择铁铲
+			else if (msg.x >= 756 && msg.x <= 756 + 49 && msg.y <= 52 && holdingPlants == 0 && holdingShovel == 0) // 选择铁铲
 			{
 				curX = msg.x;
 				curY = msg.y;
@@ -769,7 +769,7 @@ void MouseActionGaming()
 				CollectSunshine(&msg);
 			}
 		}
-		else if (msg.message == WM_MOUSEMOVE && status_leftClick && holdingPlants) // 鼠标拖拽
+		else if (msg.message == WM_MOUSEMOVE && status_leftClick && (holdingPlants || holdingShovel)) // 鼠标拖拽
 		{
 			curX = msg.x;
 			curY = msg.y;
@@ -794,6 +794,21 @@ void MouseActionGaming()
 				map[row][col].eaten = 0;
 				PlantsCultivate();
 			}
+			else
+			{
+				if (curPlant == peaShooter.type)
+				{
+					index = -1;
+					curPlant = index;
+					sunshineScore += peaShooter.sunshine;
+				}
+				else if (curPlant == sunflower.type)
+				{
+					index = -1;
+					curPlant = index;
+					sunshineScore += sunflower.sunshine;
+				}
+			}
 
 			// 设置鼠标状态为0
 			status_leftClick = 0;
@@ -812,7 +827,7 @@ void MouseActionGaming()
 		}
 		else if (msg.message == WM_LBUTTONUP && msg.x >= 340 - 112 && msg.x <= 340 - 112 + PlantsCount * 65 && msg.y <= 96 && holdingPlants) // 取消种植植物
 		{
-			//std::cout << index << std::endl;
+			std::cout << index << std::endl;
 			index = (msg.x - (340 - 112)) / 66;
 			if (index == peaShooter.type)
 			{
@@ -844,14 +859,10 @@ void MovePlants(ExMessage* msg)
 		curX = msg->x;
 		curY = msg->y;
 	}
-	else if (msg->message == WM_LBUTTONUP)
+	else if (msg->message == WM_LBUTTONUP && map[row][col].type > -1)
 	{
-		if (map[row][col].type > -1)
-		{
-			map[row][col].type = -1;
-			MovePlantMusic();
-
-		}
+		map[row][col].type = -1;
+		MovePlantMusic();
 	}
 
 	// 初始化所有子弹时，将全局所有子弹的爆炸状态全部置为0，防止出现部分子弹碰撞完后卡在画面中
@@ -1201,6 +1212,7 @@ void ChoosePlant(int index)
 				curPlant = index;
 				// 更新阳光
 				sunshineScore -= peaShooter.sunshine;
+				holdingPlants = 1;
 				// 播放选中的音乐
 				ChoosePlantMusic();
 			}
@@ -1219,6 +1231,7 @@ void ChoosePlant(int index)
 			{
 				sunshineScore -= sunflower.sunshine;
 				curPlant = index;
+				holdingPlants = 1;
 				ChoosePlantMusic();
 			}
 		}
@@ -1227,8 +1240,6 @@ void ChoosePlant(int index)
 			FailChoosePlantMusic();
 		}
 	}
-
-	holdingPlants = 1;
 }
 
 // 创建僵尸
@@ -1267,7 +1278,7 @@ void CreateZombies()
 			zombies[i].y = 170 + (1 + zombies[i].row) * 100;
 			zombies[i].frameIndex = 0;
 			zombies[i].isUse = 1;
-			zombies[i].speed = 1;
+			zombies[i].speed = 5;
 			// 设置僵尸血量
 			zombies[i].blood = 150;
 			// 设置僵尸起始状态
