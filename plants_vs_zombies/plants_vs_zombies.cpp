@@ -128,7 +128,7 @@ void StartBackgroundMusic()
 	// 加载音乐文件
 	Mix_Chunk* background = Mix_LoadWAV("res/music/start.wav");
 	if (!background) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -142,7 +142,7 @@ void ClickMenuMusic()
 	// 加载音乐文件
 	Mix_Chunk* menu = Mix_LoadWAV("res/music/clickMenu.wav");
 	if (!menu) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -156,7 +156,7 @@ void GamingBackgroundMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/grass.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -172,7 +172,7 @@ void ChoosePlantMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/choose.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -188,7 +188,7 @@ void PlantsCultivate()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/plant.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -204,7 +204,7 @@ void CollectSunshineMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/sunshine.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -219,7 +219,7 @@ void FailChoosePlantMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/failToChoose.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -234,7 +234,7 @@ void ZombiesComingMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/coming.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -252,19 +252,19 @@ void ZombiesGroanMusic()
 	Mix_Chunk* sound4 = Mix_LoadWAV("res/music/groan4.wav");
 	Mix_Chunk* sound5 = Mix_LoadWAV("res/music/groan5.wav");
 	if (!sound2) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 	if (!sound3) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 	if (!sound4) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 	if (!sound5) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -308,7 +308,7 @@ void PeaShooterBulletCollideMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/hit.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -322,7 +322,7 @@ void ZombieEatingMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/eating.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -337,7 +337,7 @@ void OverlookingMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/overlooking.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -351,7 +351,7 @@ void ChooseShovelMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/shovel.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -365,7 +365,7 @@ void MovePlantMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/plant2.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -379,7 +379,7 @@ void LawnmowerMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/lawnmower.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -393,7 +393,7 @@ void SuccessMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/success.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -407,7 +407,7 @@ void FailMusic()
 	// 加载音乐文件
 	Mix_Chunk* sound = Mix_LoadWAV("res/music/lose.wav");
 	if (!sound) {
-		printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("Failed to load music, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -899,9 +899,9 @@ void CreateSunshineFromSky()
 		if (i < SUNSHINENUM)
 		{
 			// 更改新阳光的数据
-			sunshine_sky[i].x = 260 - 112 + 100 + rand() % (900 - 260); // [248, 899]
+			sunshine_sky[i].x = 260 - 112 + 100 + rand() % (900 - 420);
 			sunshine_sky[i].y = 170;
-			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 100; // [200, 500]
+			sunshine_sky[i].dest = 200 + (1 + rand() % 3) * 100;
 			sunshine_sky[i].frameIndex = 0; // 从第一张帧照片开始
 			sunshine_sky[i].timer = 0;
 			// 阳光点击状态设置为0
@@ -968,7 +968,7 @@ void CreateSunshineFromSunflower()
 	if (count >= frequent)
 	{
 		// 通过随机数控制阳光产生的频率
-		frequent = 100; // [100, 199]
+		frequent = 100;
 		count = 0;// 重新计数
 		// 找到种向日葵的位置
 		int row = -1;
@@ -1030,8 +1030,8 @@ void CreateSunshineFromSunflower()
 			sunshine_sunflower[i].t_change = 1;
 			sunshine_sunflower[i].start_x = startX;
 			sunshine_sunflower[i].start_y = startY;
-			printf("运动x方向：%f\n", sunshine_sunflower[i].start_x);
-			printf("运动y方向：%f\n", sunshine_sunflower[i].start_y);
+			//printf("运动x方向：%f\n", sunshine_sunflower[i].start_x);
+			//printf("运动y方向：%f\n", sunshine_sunflower[i].start_y);
 			sunshine_sunflower[i].end_x = endX;
 			sunshine_sunflower[i].end_y = endY;
 			// 初始化斜抛角度
@@ -1042,7 +1042,7 @@ void CreateSunshineFromSunflower()
 			sunshine_sunflower[i].timer = 0;
 			sunshine_sunflower[i].frameIndex = 0;
 			sunshine_sunflower[i].max_y = (sunshine_sunflower[i].speed * sin((sunshine_sunflower[i].angle * PI / 180)) * sunshine_sunflower[i].speed * sin((sunshine_sunflower[i].angle * PI / 180))) / (2 * GRAVITY) + sunshine_sunflower[i].start_y - 50;
-			printf("最高点高度：%f\n", sunshine_sunflower[i].max_y);
+			//printf("最高点高度：%f\n", sunshine_sunflower[i].max_y);
 		}
 	}
 }
@@ -1072,9 +1072,9 @@ void UpdateSunshineFromSunflower()
 					{
 						sunshine_sunflower[i].angle -= 15;
 					}
-					printf("斜抛运动x方向：%f\n", sunshine_sunflower[i].start_x);
-					printf("斜抛运动y方向：%f\n", sunshine_sunflower[i].start_y);
-					printf("斜抛运动y方向角度：%f\n", sunshine_sunflower[i].angle);
+					//printf("斜抛运动x方向：%f\n", sunshine_sunflower[i].start_x);
+					//printf("斜抛运动y方向：%f\n", sunshine_sunflower[i].start_y);
+					//printf("斜抛运动y方向角度：%f\n", sunshine_sunflower[i].angle);
 				}
 			}
 			if (sunshine_sunflower[i].start_x >= sunshine_sunflower[i].end_x || sunshine_sunflower[i].start_y >= sunshine_sunflower[i].end_y)
@@ -1228,6 +1228,11 @@ void CreateZombies()
 	{
 		frequent = 200;
 		count = 0;
+		// 最后一波攻势
+		if (ZombieAppeared >= (ZOMBIECOUNT * 3 / 5))
+		{
+			frequent = 0;
+		}
 		// 找到未使用的僵尸
 		int i = 0;
 		while (i < ZOMBIENUM && zombies[i].isUse)
@@ -1501,7 +1506,7 @@ void CheckZombieCollision()
 						count = 0;
 						// 植物血量减少
 						map[row][j].blood -= EATDAMAGE;
-						printf("%d %d %d\n", row, j, map[row][j].blood);
+						//printf("%d %d %d\n", row, j, map[row][j].blood);
 					}
 					if (map[row][j].blood > 0)
 					{
@@ -1613,13 +1618,13 @@ void GameStartMenu()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		//printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
 		return;
 	}
 
 	// 初始化Mixer子系统
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 
@@ -1693,13 +1698,13 @@ void Overlooking()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		//printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
 		return;
 	}
 
 	// 初始化Mixer子系统
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
 		return;
 	}
 	OverlookingMusic();
@@ -1836,13 +1841,13 @@ int Gaming()
 {
 	// 初始化SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
+		//printf("SDL could not initialize, SDL_Error: %s\n", SDL_GetError());
 		return 0;
 	}
 
 	// 初始化Mixer子系统
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-		printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
+		//printf("SDL_mixer could not initialize, SDL_mixer Error: %s\n", Mix_GetError());
 		return 0;
 	}
 

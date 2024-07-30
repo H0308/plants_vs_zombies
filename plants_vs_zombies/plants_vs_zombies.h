@@ -22,7 +22,7 @@
 #define EATDAMAGE 10 // 僵尸吃植物的伤害
 #define GRAVITY 7 // 重力加速度
 #define PI 3.14 // 圆周率
-#define ZOMBIECOUNT 15 // 一局僵尸的数量
+#define ZOMBIECOUNT 25 // 一局僵尸的数量
 
 static IMAGE imgstart;// 菜单场景背景
 static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
