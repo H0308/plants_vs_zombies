@@ -1278,7 +1278,7 @@ void CreateZombies()
 			zombies[i].y = 170 + (1 + zombies[i].row) * 100;
 			zombies[i].frameIndex = 0;
 			zombies[i].isUse = 1;
-			zombies[i].speed = 5;
+			zombies[i].speed = 1;
 			// 设置僵尸血量
 			zombies[i].blood = 150;
 			// 设置僵尸起始状态
