@@ -29,6 +29,7 @@ static IMAGE imgMenu, imgMenuClicked;// 菜单按钮
 static IMAGE imgBackground;// 游戏场景背景
 static IMAGE imgPlantsBar;// 植物栏
 static int status_leftClick; // 是否点击菜单
+static int status_leftHover; // 是否在指定位置悬停
 
 // 植物卡牌
 enum
@@ -162,7 +163,6 @@ static IMAGE imgShovelSmall; // 存储铁铲图片
 static IMAGE imgShovelNormal; // 存储铁铲图片
 static int holdingShovel; // 当前是否已经拿到铁铲
 static int holdingPlants; // 当前是否持有植物
-static int ShovelStay; // 铁铲是否在原地
 
 // 存储僵尸的数组
 static zombie zombies[ZOMBIENUM];
@@ -170,8 +170,6 @@ static zombie zombies[ZOMBIENUM];
 static IMAGE imgZombieFrameIndex[22];
 // 僵尸站立动作帧数组
 static IMAGE imgZombieStandFrameIndex[11];
-// 准备安放植物图片
-static IMAGE imgReadySetPlants[3];
 static plant map[MAPROW][MAPCOL];// 植物地图
 
 enum

@@ -422,6 +422,8 @@ void StartInit()
 	loadimage(&imgstart, "res/MainMenu.png");
 	// 默认未点击状态
 	status_leftClick = 0;
+	// 默认未悬浮状态
+	status_leftHover = 0;
 
 	// 加载选项
 	loadimage(&imgMenu, "res/menu1.png");
@@ -434,7 +436,7 @@ void ImageRenderStart()
 	// 渲染开始菜单
 	putimagePNG(0, 0, &imgstart);
 	// 渲染默认菜单和选中菜单
-	putimagePNG(474, 75, status_leftClick ? &imgMenuClicked : &imgMenu);
+	putimagePNG(474, 75, (status_leftClick || status_leftHover ) ? &imgMenuClicked : &imgMenu);
 }
 
 // 初始游戏场景
@@ -863,12 +865,6 @@ void MovePlants(ExMessage* msg)
 	{
 		map[row][col].type = -1;
 		MovePlantMusic();
-	}
-
-	// 初始化所有子弹时，将全局所有子弹的爆炸状态全部置为0，防止出现部分子弹碰撞完后卡在画面中
-	for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
-	{
-		peaShooterBullets[k].isExplode = 0;
 	}
 
 	// 僵尸恢复样式
@@ -1482,11 +1478,6 @@ void CheckPeaShooterBulletsCollision()
 								zombies[j].isDead = 1;
 								// 僵尸的死亡动画图片帧
 								zombies[j].frameIndex = 0;
-								// 清空所有已发射的子弹防止豌豆死亡子弹停留
-								for (int k = 0; k < PEASHOOTERBULLETNUM; k++)
-								{
-									peaShooterBullets[k].isExplode = 0;
-								}
 							}
 							// 当前的子弹击中当前僵尸后不需要比较后面的子弹是否击中
 							break;
@@ -1670,27 +1661,43 @@ void GameStartMenu()
 		// 渲染图片
 		ImageRenderStart();
 		EndBatchDraw();
+		static int count = 0;
 		if (peekmessage(&msg))
 		{
-			if (msg.message == WM_LBUTTONDOWN)
+			if (msg.message == WM_MOUSEMOVE && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
 			{
-				if (msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+				status_leftHover = 1;
+				count++;
+				if (count == 1)
 				{
-					status_leftClick = 1;
 					ClickMenuMusic();
 				}
 			}
-			else if (msg.message == WM_LBUTTONUP && status_leftClick)
+			else if (msg.message == WM_LBUTTONDOWN && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+			{
+				status_leftClick = 1;
+				count++;
+				if (count == 1)
+				{
+					ClickMenuMusic();
+				}
+			}
+			else if (msg.message == WM_LBUTTONUP && status_leftClick && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
 			{
 				status_leftClick = 0;
-				EndBatchDraw();
+				count = 0;
 				break;
+			}
+			else if (!(msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215))
+			{
+				status_leftClick = 0;
+				status_leftHover = 0;
+				count = 0;
 			}
 		}
 	}
 
-	// 关闭两个音乐
-	Mix_CloseAudio();
+	// 关闭音乐
 	Mix_CloseAudio();
 
 	return;
