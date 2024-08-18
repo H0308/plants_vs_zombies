@@ -436,7 +436,8 @@ void ImageRenderStart()
 	// 渲染开始菜单
 	putimagePNG(0, 0, &imgstart);
 	// 渲染默认菜单和选中菜单
-	putimagePNG(474, 75, (status_leftClick || status_leftHover ) ? &imgMenuClicked : &imgMenu);
+	putimagePNG(474, 75, 
+		(status_leftClick || status_leftHover ) ? &imgMenuClicked : &imgMenu);
 }
 
 // 初始游戏场景
@@ -1664,7 +1665,8 @@ void GameStartMenu()
 		static int count = 0;
 		if (peekmessage(&msg))
 		{
-			if (msg.message == WM_MOUSEMOVE && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+			if (msg.message == WM_MOUSEMOVE 
+				&& msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
 			{
 				status_leftHover = 1;
 				count++;
@@ -1673,7 +1675,8 @@ void GameStartMenu()
 					ClickMenuMusic();
 				}
 			}
-			else if (msg.message == WM_LBUTTONDOWN && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+			else if (msg.message == WM_LBUTTONDOWN 
+				&& msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
 			{
 				status_leftClick = 1;
 				count++;
@@ -1682,7 +1685,8 @@ void GameStartMenu()
 					ClickMenuMusic();
 				}
 			}
-			else if (msg.message == WM_LBUTTONUP && status_leftClick && msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
+			else if (msg.message == WM_LBUTTONUP && status_leftClick 
+				&& msg.x >= 474 && msg.x <= 774 && msg.y >= 75 && msg.y <= 215)
 			{
 				status_leftClick = 0;
 				count = 0;
