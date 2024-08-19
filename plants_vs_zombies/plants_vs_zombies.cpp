@@ -1774,7 +1774,8 @@ void Overlooking()
 		// äÖÈ¾½©Ê¬¶¯×÷
 		for (int j = 0; j < 9; j++)
 		{
-			putimagePNG(position[j]._x - min + i, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			putimagePNG(position[j]._x - min + i, position[j]._y, 
+				&imgZombieStandFrameIndex[index[j]]);
 			if (count >= 10)
 			{
 				index[j] = (index[j] + 1) % 11;
@@ -1797,7 +1798,8 @@ void Overlooking()
 
 		for (int j = 0; j < 9; j++)
 		{
-			putimagePNG(position[j]._x, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			putimagePNG(position[j]._x, position[j]._y, 
+				&imgZombieStandFrameIndex[index[j]]);
 			index[j] = (index[j] + 1) % 11;
 		}
 		Sleep(50);
@@ -1813,7 +1815,8 @@ void Overlooking()
 		putimage(i, 0, &imgBackground);
 		for (int j = 0; j < 9; j++)
 		{
-			putimagePNG(position[j]._x - min + i, position[j]._y, &imgZombieStandFrameIndex[index[j]]);
+			putimagePNG(position[j]._x - min + i, position[j]._y, 
+				&imgZombieStandFrameIndex[index[j]]);
 			if (count >= 10)
 			{
 				index[j] = (index[j] + 1) % 11;

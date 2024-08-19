@@ -126,11 +126,6 @@ struct bullet
 
 struct point
 {
-	point(int x, int y)
-		:_x(x)
-		,_y(y)
-	{}
-
 	int _x;
 	int _y;
 };
